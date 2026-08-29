@@ -44,10 +44,43 @@ export function createTurn(sessionId: string, content: string) {
   });
 }
 
+export type RequiredAction = {
+  type: string;
+  thread_id: string;
+  tool_calls: { id: string; source_event_id: string }[];
+};
+
+export type TurnState = {
+  status: string;
+  message?: string;
+  required_actions?: RequiredAction[];
+};
+
 export function getTurn(sessionId: string, turnId: string) {
-  return call<{ state: { status: string; message?: string } }>(
-    `/sessions/${sessionId}/turns/${turnId}`,
-  );
+  return call<{ state: TurnState }>(`/sessions/${sessionId}/turns/${turnId}`);
+}
+
+// Resuming a held tool call is just another turn whose only input is the verdict.
+export function respondToApproval(
+  sessionId: string,
+  threadId: string,
+  toolCallId: string,
+  status: "allow" | "deny",
+) {
+  return call<{ id: string }>(`/sessions/${sessionId}/turns`, {
+    method: "POST",
+    body: JSON.stringify({
+      input: [
+        {
+          type: "user.tool_approval",
+          thread_id: threadId,
+          tool_call_id: toolCallId,
+          approval: { status },
+        },
+      ],
+      stream: false,
+    }),
+  });
 }
 
 export function listTurnEvents(sessionId: string, turnId: string) {
@@ -56,15 +89,34 @@ export function listTurnEvents(sessionId: string, turnId: string) {
 
 // The harness reports `running` until the turn settles. Poll rather than stream
 // for now; streaming lands once the render path is proven.
-export async function runTurn(sessionId: string, content: string) {
-  const turn = await createTurn(sessionId, content);
-  for (let i = 0; i < 120; i++) {
-    const { state } = await getTurn(sessionId, turn.id);
+async function settle(sessionId: string, turnId: string) {
+  for (let i = 0; i < 200; i++) {
+    const { state } = await getTurn(sessionId, turnId);
     if (state.status !== "running") {
-      const events = await listTurnEvents(sessionId, turn.id);
-      return { status: state.status, message: state.message, events };
+      const events = await listTurnEvents(sessionId, turnId);
+      return {
+        status: state.status,
+        message: state.message,
+        requiredActions: state.required_actions ?? [],
+        events,
+      };
     }
     await new Promise((r) => setTimeout(r, 1500));
   }
   throw new Error("turn did not settle in time");
+}
+
+export async function runTurn(sessionId: string, content: string) {
+  const turn = await createTurn(sessionId, content);
+  return settle(sessionId, turn.id);
+}
+
+export async function runApproval(
+  sessionId: string,
+  threadId: string,
+  toolCallId: string,
+  status: "allow" | "deny",
+) {
+  const turn = await respondToApproval(sessionId, threadId, toolCallId, status);
+  return settle(sessionId, turn.id);
 }
