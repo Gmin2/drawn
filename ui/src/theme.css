@@ -117,6 +117,13 @@
   --color-line: var(--line);
   --color-line-strong: var(--line-strong);
   --color-hover: var(--hover);
+  --color-hover-2: var(--hover-2);
+  --color-line-soft: var(--line-soft);
+  --color-accent-ink: var(--accent-ink);
+  --color-accent-tint: var(--accent-tint);
+  --color-green-tint: var(--green-tint);
+  --color-orange-tint: var(--orange-tint);
+  --color-red-tint: var(--red-tint);
   --color-accent: var(--accent);
   --color-green: var(--green);
   --color-orange: var(--orange);
