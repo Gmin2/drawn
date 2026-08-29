@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { createSession, runTurn, type TurnEvent } from "./lib/trueforge";
+import { OptionList, type Option } from "./components/OptionList";
 
 const AGENT = "genui-flights";
 
@@ -28,6 +29,43 @@ function eventsToBubbles(events: TurnEvent[]): Bubble[] {
     }
   }
   return out;
+}
+
+// The whole generative-UI mechanism is this switch. The agent names a component
+// and hands it props; nothing here knows what a flight is. An unmapped tool name
+// falls through to its raw payload rather than disappearing.
+function renderTool(
+  b: { name: string; args: unknown },
+  send: (text: string) => void,
+  busy: boolean,
+) {
+  const args = b.args as Record<string, unknown>;
+
+  if (b.name === "render_options") {
+    return (
+      <OptionList
+        title={args.title as string}
+        options={args.options as Option[]}
+        disabled={busy}
+        onPick={(option) =>
+          send(
+            `I'll take the ${option.primary} flight${
+              option.secondary ? ` on ${option.secondary}` : ""
+            }${option.value ? ` for ${option.value}` : ""}.`,
+          )
+        }
+      />
+    );
+  }
+
+  return (
+    <div className="rounded-lg bg-zinc-900 p-3">
+      <div className="mb-2 text-xs text-zinc-500">{b.name}</div>
+      <pre className="overflow-x-auto text-xs text-zinc-300">
+        {JSON.stringify(b.args, null, 2)}
+      </pre>
+    </div>
+  );
 }
 
 export default function App() {
@@ -76,14 +114,7 @@ export default function App() {
               {b.kind === "error" && (
                 <div className="rounded-lg bg-red-950 p-3 text-sm text-red-300">{b.text}</div>
               )}
-              {b.kind === "tool" && (
-                <div className="rounded-lg bg-zinc-900 p-3">
-                  <div className="mb-2 text-xs text-zinc-500">{b.name}</div>
-                  <pre className="overflow-x-auto text-xs text-zinc-300">
-                    {JSON.stringify(b.args, null, 2)}
-                  </pre>
-                </div>
-              )}
+              {b.kind === "tool" && renderTool(b, send, busy)}
             </div>
           ))}
           {busy && <div className="text-sm text-zinc-500">thinking…</div>}
