@@ -254,7 +254,7 @@ export default function App() {
           }}
           className="mt-3"
         >
-          <div className="flex items-center gap-2 rounded-[var(--radius-window)] bg-[var(--surface)] px-3.5 py-2.5 shadow-[var(--shadow-card)]">
+          <div className="mx-auto flex w-full max-w-[520px] items-center gap-2 rounded-full bg-[var(--surface)] py-2 pr-2 pl-4 shadow-[var(--shadow-card)]">
             <input
               value={input}
               onChange={(e) => setInput(e.target.value)}
