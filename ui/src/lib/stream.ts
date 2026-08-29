@@ -42,7 +42,7 @@ export async function streamTurn(
   // message id -> accumulated prose, and (message id, call index) -> call
   const text = new Map<string, string>();
   const calls = new Map<string, PartialCall>();
-  let settled = { status: "done", message: undefined as string | undefined, requiredActions: [] as RequiredAction[] };
+  let settled: { status: string; message?: string; requiredActions: RequiredAction[] } | null = null;
 
   const handle = (event: TurnEvent & { tool_calls?: RawDeltaCall[] }) => {
     const id = event.id;
@@ -98,23 +98,44 @@ export async function streamTurn(
     if (done) break;
     buffer += decoder.decode(value, { stream: true });
 
-    // frames are separated by a blank line; anything after the last one is a
-    // partial frame and has to wait for the next chunk
+    // SSE allows CRLF, CR or LF, so normalise before looking for the blank
+    // line that ends a frame. A trailing CR is held back: it may be the first
+    // half of a CRLF landing in the next chunk, and rewriting it now would
+    // fabricate a boundary.
+    let heldCR = "";
+    if (buffer.endsWith("\r")) {
+      heldCR = "\r";
+      buffer = buffer.slice(0, -1);
+    }
+    buffer = buffer.replace(/\r\n|\r/g, "\n");
+
+    // anything after the last boundary is a partial frame and waits
     const frames = buffer.split("\n\n");
-    buffer = frames.pop() ?? "";
+    buffer = (frames.pop() ?? "") + heldCR;
 
     for (const frame of frames) {
-      for (const line of frame.split("\n")) {
-        if (!line.startsWith("data:")) continue;
-        const payload = line.slice(5).trim();
-        if (!payload || payload === "[DONE]") continue;
-        try {
-          handle(JSON.parse(payload));
-        } catch {
-          // a frame we cannot parse is not worth killing the stream over
-        }
+      // one event may carry several data fields; they join with newlines and
+      // parse once, rather than each line being its own payload
+      const payload = frame
+        .split("\n")
+        .filter((line) => line.startsWith("data:"))
+        .map((line) => line.slice(5).replace(/^ /, ""))
+        .join("\n")
+        .trim();
+
+      if (!payload || payload === "[DONE]") continue;
+      try {
+        handle(JSON.parse(payload));
+      } catch {
+        // a frame we cannot parse is not worth killing the stream over
       }
     }
+  }
+
+  if (!settled) {
+    // EOF without turn.done means the connection dropped mid-turn. Reporting
+    // success here would clear pending approvals that are still outstanding.
+    throw new Error("the turn stream ended before the turn finished");
   }
 
   return settled;
