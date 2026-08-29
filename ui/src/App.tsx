@@ -27,12 +27,18 @@ const CONNECTORS = [
   { name: "render-kit", note: "local" },
 ];
 
+// Dates are generated relative to today so the starter prompts never rot into
+// "that date is in the past" once the demo sits for a week.
+const soon = (days: number) =>
+  new Date(Date.now() + days * 86400000).toISOString().slice(0, 10);
+
 const PROMPTS = [
-  { id: "sfo-jfk", label: "SFO to JFK in September", prompt: "Find me flights from SFO to JFK on 2026-09-20" },
-  { id: "lhr-cdg", label: "London to Paris next month", prompt: "Find flights from LHR to CDG on 2026-10-05" },
-  { id: "cheapest", label: "Cheapest dates to Lisbon", prompt: "What are the cheapest dates to fly from LHR to LIS in October 2026?" },
-  { id: "nonstop", label: "Nonstop only, SFO to Tokyo", prompt: "Find nonstop flights from SFO to HND on 2026-11-12" },
-  { id: "issues", label: "Open issues on trueforge", prompt: "Show me the open issues on truefoundry/trueforge" },
+  { id: "sfo-jfk", label: "Flights · SFO to JFK", prompt: `Find me flights from SFO to JFK on ${soon(21)}` },
+  { id: "blr-gau", label: "Flights · Bengaluru to Guwahati", prompt: `Find flights from BLR to GAU on ${soon(16)}` },
+  { id: "cheapest", label: "Flights · cheapest dates to Lisbon", prompt: `What are the cheapest dates to fly from LHR to LIS around ${soon(45)}?` },
+  { id: "issues", label: "GitHub · open issues on trueforge", prompt: "Show me the open issues on truefoundry/trueforge" },
+  { id: "prs", label: "GitHub · open pull requests", prompt: "List the open pull requests on truefoundry/trueforge" },
+  { id: "issue-detail", label: "GitHub · read one issue", prompt: "Show me issue 482 on truefoundry/trueforge in full" },
 ];
 
 type Bubble =
