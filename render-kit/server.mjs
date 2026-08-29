@@ -32,6 +32,15 @@ const endpoint = z.object({
 
 const endpoints = z.object({ from: endpoint, to: endpoint });
 
+const tableRow = z.object({
+  id: z.string().min(1),
+  cells: z.array(z.string()).describe("One value per column, in column order."),
+  status: z
+    .string()
+    .optional()
+    .describe("Groups the row under a filter chip, e.g. an issue state or a task stage."),
+});
+
 const field = z.object({
   label: z.string().min(1),
   value: z.string(),
@@ -95,6 +104,38 @@ function buildServer() {
       },
     },
     async (args) => echo({ kind: "detail", ...args }),
+  );
+
+  server.registerTool(
+    "render_table",
+    {
+      title: "Render a filterable table",
+      description:
+        "Draw rows across several columns, with chips along the top to filter by status. Use this when the records have more than one attribute worth comparing side by side and the user wants to scan rather than pick one.",
+      inputSchema: {
+        title: z.string().min(1),
+        columns: z.array(z.string()).min(2).describe("Column headings, in order."),
+        rows: z.array(tableRow).min(1),
+      },
+    },
+    async (args) => {
+      const bad = args.rows.filter((row) => row.cells.length !== args.columns.length);
+      if (bad.length > 0) {
+        return {
+          isError: true,
+          content: [
+            {
+              type: "text",
+              text:
+                `Every row needs exactly one cell per column. ${args.columns.length} columns were ` +
+                `declared, but ${bad.length} row(s) did not match, starting with id "${bad[0].id}" ` +
+                `which has ${bad[0].cells.length}. Pad short rows with an empty string.`,
+            },
+          ],
+        };
+      }
+      return echo({ kind: "table", ...args });
+    },
   );
 
   server.registerTool(

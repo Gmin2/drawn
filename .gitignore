@@ -6,3 +6,7 @@ dist/
 tmp/
 *.log
 .DS_Store
+
+# vendored design reference, kept out of the repo
+reference/
+beautiful-ui-main/
