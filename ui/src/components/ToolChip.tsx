@@ -2,6 +2,7 @@ import { useState } from "react";
 import { motion } from "motion/react";
 import { spring, ease } from "../lib/motion";
 import { IconChevronDownSmall } from "./icons";
+import { CodeBlock } from "./CodeBlock";
 
 /* A tool with no component of its own collapses to one chip that hugs its
    content, rather than a full-width JSON block. The chevron is the affordance:
@@ -20,13 +21,13 @@ export function ToolChip({ name, args }: { name: string; args: Record<string, un
       initial={{ opacity: 0, y: 6 }}
       animate={{ opacity: 1, y: 0 }}
       transition={spring.glide}
-      className="w-fit max-w-full"
+      className="w-full"
     >
       <button
         type="button"
         onClick={() => setOpen((o) => !o)}
         aria-expanded={open}
-        className="flex w-full items-center gap-2 rounded-[var(--radius-chip)] bg-[var(--inset)] py-1.5 pr-2 pl-2.5 text-left transition-colors duration-150 hover:bg-[var(--hover-2)]"
+        className="flex w-fit max-w-full items-center gap-2 rounded-[var(--radius-chip)] bg-[var(--inset)] py-1.5 pr-2 pl-2.5 text-left transition-colors duration-150 hover:bg-[var(--hover-2)]"
       >
         <span className="font-mono text-[11.5px] text-[var(--ink-2)]">{name}</span>
         {summary && (
@@ -44,14 +45,14 @@ export function ToolChip({ name, args }: { name: string; args: Record<string, un
       </button>
 
       {open && (
-        <motion.pre
+        <motion.div
           initial={{ opacity: 0, height: 0 }}
           animate={{ opacity: 1, height: "auto" }}
           transition={{ duration: 0.25, ease: ease.out }}
-          className="mt-1.5 overflow-x-auto rounded-[var(--radius-control)] bg-[var(--surface)] p-3 font-mono text-[11px] leading-relaxed text-[var(--ink-2)] shadow-[var(--shadow-hairline)]"
+          className="mt-1.5 overflow-hidden"
         >
-          {JSON.stringify(args, null, 2)}
-        </motion.pre>
+          <CodeBlock name={`${name}.json`} code={JSON.stringify(args, null, 2)} />
+        </motion.div>
       )}
     </motion.div>
   );
