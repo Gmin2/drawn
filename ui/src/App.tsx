@@ -1,9 +1,13 @@
 import { useState } from "react";
+import { useEffect } from "react";
 import {
   createSession,
+  listSessions,
+  loadSession,
   runApproval,
   runTurn,
   type RequiredAction,
+  type SessionSummary,
   type TurnEvent,
 } from "./lib/trueforge";
 import { OptionList, type Option } from "./components/OptionList";
@@ -12,7 +16,7 @@ import { ConfirmCard } from "./components/ConfirmCard";
 import { ToolChip } from "./components/ToolChip";
 import { Shell } from "./components/Shell";
 import { LoadingState } from "./components/LoadingState";
-import type { Recent } from "./components/SidebarNav";
+import type { SessionItem } from "./components/SidebarNav";
 
 const AGENT = "genui-flights";
 
@@ -21,7 +25,7 @@ const CONNECTORS = [
   { name: "render-kit", note: "local" },
 ];
 
-const PROMPTS: Recent[] = [
+const PROMPTS = [
   { id: "sfo-jfk", label: "SFO to JFK in September", prompt: "Find me flights from SFO to JFK on 2026-09-20" },
   { id: "lhr-cdg", label: "London to Paris next month", prompt: "Find flights from LHR to CDG on 2026-10-05" },
   { id: "cheapest", label: "Cheapest dates to Lisbon", prompt: "What are the cheapest dates to fly from LHR to LIS in October 2026?" },
@@ -60,6 +64,19 @@ export default function App() {
   const [decided, setDecided] = useState<Record<string, "allow" | "deny">>({});
   const [input, setInput] = useState("Find me flights from SFO to JFK on 2026-09-20");
   const [busy, setBusy] = useState(false);
+  const [sessions, setSessions] = useState<SessionSummary[]>([]);
+
+  async function refreshSessions() {
+    try {
+      setSessions(await listSessions());
+    } catch {
+      // the list is a convenience; a failure here should not break the chat
+    }
+  }
+
+  useEffect(() => {
+    void refreshSessions();
+  }, []);
 
   function absorb(turn: Awaited<ReturnType<typeof runTurn>>) {
     if (turn.status === "error") {
@@ -82,6 +99,7 @@ export default function App() {
         setSessionId(sid);
       }
       absorb(await runTurn(sid, text));
+      void refreshSessions();
     } catch (err) {
       setBubbles((b) => [
         ...b,
@@ -168,6 +186,30 @@ export default function App() {
     return <ToolChip name={b.name} args={args} />;
   }
 
+  async function open(session: SessionSummary) {
+    if (busy) return;
+    setBusy(true);
+    try {
+      const replay = await loadSession(session.id);
+      const next: Bubble[] = [];
+      for (const turn of replay.turns) {
+        for (const text of turn.userMessages) next.push({ kind: "user", text });
+        next.push(...eventsToBubbles(turn.events));
+      }
+      setSessionId(session.id);
+      setBubbles(next);
+      setPending(replay.requiredActions);
+      setDecided({});
+      localStorage.setItem("genui:last-session", session.id);
+    } catch (err) {
+      setBubbles([
+        { kind: "error", text: err instanceof Error ? err.message : String(err) },
+      ]);
+    } finally {
+      setBusy(false);
+    }
+  }
+
   function reset() {
     setSessionId(null);
     setBubbles([]);
@@ -177,24 +219,14 @@ export default function App() {
 
   const turns = bubbles.filter((b) => b.kind === "user").length;
 
-  const [activeTitle, setActiveTitle] = useState<string | null>(null);
-
-  function pick(r: Recent) {
-    setActiveTitle(r.label);
-    send(r.prompt);
-  }
-
   return (
     <Shell
-      onReset={() => {
-        reset();
-        setActiveTitle(null);
-      }}
+      onReset={reset}
       turns={turns}
-      recents={PROMPTS}
+      sessions={sessions}
       connectors={CONNECTORS}
-      activeTitle={activeTitle}
-      onPick={pick}
+      activeId={sessionId}
+      onPick={(s: SessionItem) => void open(s)}
     >
       <div className="flex min-h-0 flex-1 flex-col px-12 py-9">
         <div className="mb-3 flex items-start gap-2 sm:items-baseline">
@@ -213,9 +245,23 @@ export default function App() {
 
         <div className="flex min-h-0 flex-1 flex-col overflow-y-auto rounded-[var(--radius-window)] bg-[var(--canvas)] p-6">
           {bubbles.length === 0 ? (
-            <div className="m-auto max-w-[340px] text-center text-[12.5px] leading-relaxed text-[var(--ink-3)]">
-              Ask for a route and a date. The agent calls the flight connector, then draws
-              the results with its own components instead of describing them.
+            <div className="m-auto flex max-w-[380px] flex-col items-center gap-4">
+              <p className="text-center text-[12.5px] leading-relaxed text-[var(--ink-3)]">
+                Ask for a route and a date. The agent calls the flight connector, then
+                draws the results with its own components instead of describing them.
+              </p>
+              <div className="flex flex-wrap justify-center gap-1.5">
+                {PROMPTS.map((p) => (
+                  <button
+                    key={p.id}
+                    type="button"
+                    onClick={() => send(p.prompt)}
+                    className="rounded-full bg-[var(--surface)] px-3 py-1.5 text-[12px] text-[var(--ink-2)] shadow-[var(--shadow-btn)] transition-colors duration-150 hover:bg-[var(--hover)] hover:text-[var(--ink)]"
+                  >
+                    {p.label}
+                  </button>
+                ))}
+              </div>
             </div>
           ) : (
             <div className="flex flex-col gap-4">

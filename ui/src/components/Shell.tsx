@@ -1,22 +1,22 @@
 import { useEffect, useState, type ReactNode } from "react";
-import { SidebarNav, type Recent } from "./SidebarNav";
+import { SidebarNav, type SessionItem } from "./SidebarNav";
 
 export function Shell({
   children,
   onReset,
   turns,
-  recents,
+  sessions,
   connectors,
-  activeTitle,
+  activeId,
   onPick,
 }: {
   children: ReactNode;
   onReset: () => void;
   turns: number;
-  recents: Recent[];
+  sessions: SessionItem[];
   connectors: { name: string; note: string }[];
-  activeTitle: string | null;
-  onPick: (r: Recent) => void;
+  activeId: string | null;
+  onPick: (s: SessionItem) => void;
 }) {
   const [dark, setDark] = useState(false);
 
@@ -29,9 +29,9 @@ export function Shell({
       <div className="flex w-full max-w-[1120px] bg-[var(--page)]">
         <div className="hidden md:flex">
           <SidebarNav
-            recents={recents}
+            sessions={sessions}
             connectors={connectors}
-            activeTitle={activeTitle}
+            activeId={activeId}
             turns={turns}
             onNewChat={onReset}
             onPick={onPick}

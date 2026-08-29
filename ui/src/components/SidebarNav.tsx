@@ -20,7 +20,7 @@ import {
 
 const WORKSPACE = { name: "TrueForge", monogram: "T" };
 
-export type Recent = { id: string; label: string; prompt: string };
+export type SessionItem = { id: string; title?: string; updated_at: string };
 
 const SIDEBAR_MOTION = {
   expandedWidth: 224,
@@ -179,20 +179,20 @@ function WorkspaceMenu({
 }
 
 export function SidebarNav({
-  recents,
+  sessions,
   connectors,
-  activeTitle,
+  activeId,
   onNewChat,
   onPick,
   turns,
   dark,
   onThemeChange,
 }: {
-  recents: Recent[];
+  sessions: SessionItem[];
   connectors: { name: string; note: string }[];
-  activeTitle: string | null;
+  activeId: string | null;
   onNewChat: () => void;
-  onPick: (r: Recent) => void;
+  onPick: (s: SessionItem) => void;
   turns: number;
   dark: boolean;
   onThemeChange: (v: boolean) => void;
@@ -205,8 +205,8 @@ export function SidebarNav({
   const workspaceButtonRef = useRef<HTMLButtonElement>(null);
   const searchRef = useRef<HTMLInputElement>(null);
 
-  const visible = recents.filter((r) =>
-    r.label.toLowerCase().includes(query.trim().toLowerCase()),
+  const visible = sessions.filter((s) =>
+    (s.title ?? "Untitled").toLowerCase().includes(query.trim().toLowerCase()),
   );
 
   useEffect(() => {
@@ -329,7 +329,7 @@ export function SidebarNav({
           />
         </GlideGroup>
 
-        <div className="mt-4 min-h-0 flex-1 overflow-y-auto">
+        <div className="mt-4 min-h-0 flex-1 overflow-x-hidden overflow-y-auto">
           <div className="sidebar-copy relative mx-2 mb-1 h-8">
             <div
               aria-hidden={searchOpen}
@@ -342,12 +342,12 @@ export function SidebarNav({
               }}
             >
               <IconChevronDownSmall size={16} />
-              <span>Prompts</span>
+              <span>Sessions</span>
             </div>
 
             <button
               type="button"
-              aria-label="Search prompts"
+              aria-label="Search sessions"
               aria-expanded={searchOpen}
               onClick={() => setSearchOpen(true)}
               className={`absolute top-0 right-0 z-10 flex size-8 items-center justify-center rounded-[8px] text-[var(--ink-3)] transition-[opacity,background-color,color,transform] hover:bg-[var(--hover-2)] hover:text-[var(--ink)] active:scale-[0.96] ${
@@ -381,8 +381,8 @@ export function SidebarNav({
                     setQuery("");
                   }
                 }}
-                placeholder="Search prompts"
-                aria-label="Search prompts"
+                placeholder="Search sessions"
+                aria-label="Search sessions"
                 className="ml-1.5 min-w-0 flex-1 bg-transparent text-[13px] font-medium text-[var(--ink)] outline-none placeholder:text-[var(--ink-3)]"
               />
               <button
@@ -401,13 +401,13 @@ export function SidebarNav({
 
           <GlideGroup>
             {visible.map((item) => {
-              const active = item.label === activeTitle;
+              const active = item.id === activeId;
               return (
                 <button
                   key={item.id}
                   data-row
                   type="button"
-                  title={item.prompt}
+                  title={item.title ?? "Untitled session"}
                   onClick={() => onPick(item)}
                   className={`sidebar-row relative z-10 mx-2 flex h-[34px] items-center rounded-[8px] px-2 text-left transition-[width,background-color,color,transform] duration-150 active:scale-[0.98] ${
                     active ? "bg-[var(--hover-2)] group-hover/glide:bg-transparent" : ""
@@ -418,14 +418,19 @@ export function SidebarNav({
                       active ? "text-[var(--ink)]" : "text-[var(--ink-2)]"
                     }`}
                   >
-                    {item.label}
+                    {item.title ?? "Untitled session"}
                   </span>
                 </button>
               );
             })}
+            {!query && visible.length === 0 && (
+              <div className="sidebar-copy mx-2 px-2 py-2 text-[12.5px] text-[var(--ink-3)]">
+                No sessions yet
+              </div>
+            )}
             {query && visible.length === 0 && (
               <div className="sidebar-copy mx-2 px-2 py-2 text-[12.5px] text-[var(--ink-3)]">
-                No prompts found
+                No sessions found
               </div>
             )}
           </GlideGroup>

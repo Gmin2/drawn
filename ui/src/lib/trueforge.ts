@@ -27,11 +27,57 @@ async function call<T>(path: string, init?: RequestInit): Promise<T> {
   return body.data as T;
 }
 
+export type SessionSummary = {
+  id: string;
+  title?: string;
+  created_at: string;
+  updated_at: string;
+};
+
 export function createSession(agentName: string) {
   return call<{ id: string }>("/sessions", {
     method: "POST",
     body: JSON.stringify({ agent: { name: agentName } }),
   });
+}
+
+export function listSessions(limit = 25) {
+  return call<SessionSummary[]>(`/sessions?limit=${limit}`);
+}
+
+type TurnSummary = {
+  id: string;
+  input?: { type: string; content?: string }[];
+  state?: TurnState;
+};
+
+/** Session-wide events arrive newest-first and wrapped in `{ turn_id, event }`,
+ *  and they carry no user messages — those live on each turn's `input`. So a
+ *  replay has to join the two and re-order. */
+export async function loadSession(sessionId: string) {
+  const [turns, wrapped] = await Promise.all([
+    call<TurnSummary[]>(`/sessions/${sessionId}/turns`),
+    call<{ turn_id: string; event: TurnEvent }[]>(`/sessions/${sessionId}/events`),
+  ]);
+
+  const byTurn = new Map<string, TurnEvent[]>();
+  for (const { turn_id, event } of wrapped) {
+    const list = byTurn.get(turn_id) ?? [];
+    list.push(event);
+    byTurn.set(turn_id, list);
+  }
+  for (const list of byTurn.values()) list.reverse();
+
+  const last = turns[turns.length - 1];
+  return {
+    turns: turns.map((t) => ({
+      userMessages: (t.input ?? [])
+        .filter((i) => i.type === "user.message" && i.content)
+        .map((i) => i.content as string),
+      events: byTurn.get(t.id) ?? [],
+    })),
+    requiredActions: last?.state?.required_actions ?? [],
+  };
 }
 
 export function createTurn(sessionId: string, content: string) {
