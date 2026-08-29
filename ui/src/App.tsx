@@ -13,6 +13,7 @@ import {
 import { OptionList, type Option } from "./components/OptionList";
 import { DetailCard, type Field } from "./components/DetailCard";
 import { TicketCard, type Endpoint } from "./components/TicketCard";
+import { DataTable, type TableRow } from "./components/DataTable";
 import { ConfirmCard } from "./components/ConfirmCard";
 import { ToolChip } from "./components/ToolChip";
 import { Shell } from "./components/Shell";
@@ -179,6 +180,16 @@ export default function App() {
                   )
               : undefined
           }
+        />
+      );
+    }
+
+    if (b.name === "render_table") {
+      return (
+        <DataTable
+          title={args.title as string}
+          columns={(args.columns as string[]) ?? []}
+          rows={(args.rows as TableRow[]) ?? []}
         />
       );
     }
