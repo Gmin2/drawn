@@ -114,7 +114,13 @@ function buildServer() {
         "Draw rows across several columns, with chips along the top to filter by status. Use this when the records have more than one attribute worth comparing side by side and the user wants to scan rather than pick one.",
       inputSchema: {
         title: z.string().min(1),
-        columns: z.array(z.string()).min(2).describe("Column headings, in order."),
+        columns: z
+          .array(z.string())
+          .min(2)
+          .max(5)
+          .describe(
+            "Column headings, in order. Four or five at most — the table is read in a narrow column, and more than that truncates every cell. Drop the attributes nobody scans for rather than squeezing them all in.",
+          ),
         rows: z.array(tableRow).min(1),
       },
     },

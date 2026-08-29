@@ -111,14 +111,14 @@ export function DataTable({
         <div role="table" aria-label={title} aria-rowcount={rows.length + 1} className="min-w-[440px]">
           <div
             role="row"
-            className="grid border-b border-[var(--line)] text-[12px] font-medium text-[var(--ink-2)]"
+            className="grid border-b border-[var(--line)] text-[13px] font-medium text-[var(--ink-2)]"
             style={{ gridTemplateColumns: template }}
           >
             {heads.map((column, i) => (
               <span
                 key={column}
                 role="columnheader"
-                className={`px-3 py-2 ${i < heads.length - 1 ? "border-r border-[var(--line)]" : ""}`}
+                className={`px-3.5 py-2.5 ${i < heads.length - 1 ? "border-r border-[var(--line)]" : ""}`}
               >
                 {column}
               </span>
@@ -142,7 +142,7 @@ export function DataTable({
                 <div className="overflow-hidden">
                   <div
                     role="row"
-                    className="grid border-b border-[var(--line)] text-[12.5px] transition-colors duration-100 hover:bg-[var(--hover)]"
+                    className="grid border-b border-[var(--line)] text-[13px] transition-colors duration-100 hover:bg-[var(--hover)]"
                     style={{ gridTemplateColumns: template }}
                   >
                     {/* replayed sessions can carry payloads that predate the server-side
@@ -151,7 +151,7 @@ export function DataTable({
                       <span
                         key={i}
                         role="cell"
-                        className={`flex min-w-0 items-center border-r border-[var(--line)] px-3 py-2 ${
+                        className={`flex min-w-0 items-center border-r border-[var(--line)] px-3.5 py-3 ${
                           i === 0 ? "font-medium text-[var(--ink)]" : "text-[var(--ink-2)]"
                         }`}
                       >
@@ -159,10 +159,10 @@ export function DataTable({
                       </span>
                     ))}
                     {statuses.length > 0 && (
-                      <span role="cell" className="flex min-w-0 items-center px-3 py-2">
+                      <span role="cell" className="flex min-w-0 items-center px-3.5 py-3">
                         {row.status ? (
                           <span
-                            className="drawn-pill inline-flex h-[23px] shrink-0 items-center rounded-[8px] px-[7px] text-[12.5px] font-medium whitespace-nowrap"
+                            className="drawn-pill inline-flex h-[26px] shrink-0 items-center rounded-[8px] px-2 text-[13px] font-medium whitespace-nowrap"
                             style={{ "--tag-base": hueFor(row.status) } as React.CSSProperties}
                           >
                             {row.status}
