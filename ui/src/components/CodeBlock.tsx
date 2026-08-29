@@ -65,7 +65,7 @@ function highlight(line: string): ReactNode[] {
   return nodes;
 }
 
-export function CodeBlock({ name, code }: { name: string; code: string }) {
+export function CodeBlock({ code }: { code: string }) {
   const [copied, setCopied] = useState(false);
   const lines = code.split("\n");
 
@@ -80,20 +80,16 @@ export function CodeBlock({ name, code }: { name: string; code: string }) {
   }
 
   return (
-    <div className="overflow-hidden rounded-[var(--radius-control)] bg-[var(--surface)] shadow-[var(--shadow-hairline)]">
-      <div className="flex items-center justify-between border-b border-[var(--line)] px-3 py-1.5">
-        <span className="flex items-center gap-1.5 font-mono text-[11.5px] text-[var(--ink-2)]">
-          <span className="text-[var(--ink-3)]">{"</>"}</span>
-          {name}
-        </span>
-        <button
-          type="button"
-          onClick={copy}
-          className="text-[11.5px] text-[var(--ink-3)] transition-colors duration-150 hover:text-[var(--ink)]"
-        >
-          {copied ? "Copied" : "Copy"}
-        </button>
-      </div>
+    <div className="group/code relative overflow-hidden rounded-[var(--radius-control)] bg-[var(--surface)] shadow-[var(--shadow-hairline)]">
+      {/* no filename bar: this is a tool payload, not a file, and naming it
+          one was inventing a fiction. Copy sits over the body instead. */}
+      <button
+        type="button"
+        onClick={copy}
+        className="absolute top-1.5 right-2 z-10 rounded-[var(--radius-chip)] bg-[var(--surface)] px-1.5 py-0.5 text-[11px] text-[var(--ink-3)] opacity-0 transition-opacity duration-150 group-hover/code:opacity-100 focus-visible:opacity-100"
+      >
+        {copied ? "Copied" : "Copy"}
+      </button>
 
       <div className="max-h-[320px] overflow-auto py-2">
         {lines.map((line, i) => (

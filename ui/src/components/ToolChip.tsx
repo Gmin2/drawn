@@ -51,7 +51,7 @@ export function ToolChip({ name, args }: { name: string; args: Record<string, un
           transition={{ duration: 0.25, ease: ease.out }}
           className="mt-1.5 overflow-hidden"
         >
-          <CodeBlock name={`${name}.json`} code={JSON.stringify(args, null, 2)} />
+          <CodeBlock code={JSON.stringify(args, null, 2)} />
         </motion.div>
       )}
     </motion.div>
