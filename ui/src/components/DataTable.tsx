@@ -28,14 +28,16 @@ const SAMPLE: DataTableProps = {
   ],
 };
 
-// Status colours are assigned by position rather than by name, so the component
-// stays domain-agnostic: it has no idea what "open" or "in progress" mean.
-const DOTS = [
-  "var(--accent)",
-  "var(--orange)",
-  "var(--green)",
-  "var(--red)",
-  "var(--ink-3)",
+// One base hue per status, assigned by order of appearance rather than by name,
+// so the component stays domain-agnostic: it has no idea what "open" or "bug"
+// mean. Everything else about the pill is derived from this in CSS.
+const HUES = [
+  "oklch(75.7% 0.153 66.401)",
+  "oklch(67.1% 0.118 219.351)",
+  "oklch(65.2% 0.131 162.865)",
+  "oklch(62% 0.18 293)",
+  "oklch(64% 0.19 27)",
+  "oklch(66% 0.21 323)",
 ];
 
 export function DataTable({
@@ -54,7 +56,15 @@ export function DataTable({
     return [...seen.entries()];
   }, [rows]);
 
-  const template = `minmax(0,1.5fr) ${columns
+  const hueFor = (status: string) => {
+    const index = statuses.findIndex(([name]) => name === status);
+    return HUES[(index < 0 ? 0 : index) % HUES.length];
+  };
+
+  // The status becomes its own column of pills, appended after whatever the
+  // agent supplied, rather than being flattened into a plain cell.
+  const heads = statuses.length > 0 ? [...columns, "Status"] : columns;
+  const template = `minmax(0,1.5fr) ${heads
     .slice(1)
     .map(() => "minmax(0,0.85fr)")
     .join(" ")}`;
@@ -81,7 +91,7 @@ export function DataTable({
                 key={status}
                 label={status}
                 count={count}
-                dot={DOTS[i % DOTS.length]}
+                dot={HUES[i % HUES.length]}
                 active={filter === status}
                 onClick={() => setFilter(status)}
               />
@@ -102,10 +112,10 @@ export function DataTable({
             className="grid border-b border-[var(--line)] text-[12px] font-medium text-[var(--ink-2)]"
             style={{ gridTemplateColumns: template }}
           >
-            {columns.map((column, i) => (
+            {heads.map((column, i) => (
               <span
                 key={column}
-                className={`px-3 py-2 ${i < columns.length - 1 ? "border-r border-[var(--line)]" : ""}`}
+                className={`px-3 py-2 ${i < heads.length - 1 ? "border-r border-[var(--line)]" : ""}`}
               >
                 {column}
               </span>
@@ -132,13 +142,27 @@ export function DataTable({
                     {row.cells.map((cell, i) => (
                       <span
                         key={i}
-                        className={`flex min-w-0 items-center px-3 py-2 ${
-                          i < columns.length - 1 ? "border-r border-[var(--line)]" : ""
-                        } ${i === 0 ? "font-medium text-[var(--ink)]" : "text-[var(--ink-2)]"}`}
+                        className={`flex min-w-0 items-center border-r border-[var(--line)] px-3 py-2 ${
+                          i === 0 ? "font-medium text-[var(--ink)]" : "text-[var(--ink-2)]"
+                        }`}
                       >
-                        <span className="truncate">{cell}</span>
+                        <span className="truncate">{cell || "—"}</span>
                       </span>
                     ))}
+                    {statuses.length > 0 && (
+                      <span className="flex min-w-0 items-center px-3 py-2">
+                        {row.status ? (
+                          <span
+                            className="drawn-pill inline-flex h-[23px] shrink-0 items-center rounded-[8px] px-[7px] text-[12.5px] font-medium whitespace-nowrap"
+                            style={{ "--tag-base": hueFor(row.status) } as React.CSSProperties}
+                          >
+                            {row.status}
+                          </span>
+                        ) : (
+                          <span className="text-[var(--ink-3)]">—</span>
+                        )}
+                      </span>
+                    )}
                   </div>
                 </div>
               </div>

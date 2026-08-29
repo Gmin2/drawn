@@ -130,3 +130,13 @@
   pointer-events: auto;
   opacity: 1;
 }
+
+/* Status pill, recipe from the reference filter table: one base hue per status
+   drives text, fill and border through color-mix against the surface, so the
+   same token works in light and dark without a second palette. */
+.drawn-pill {
+  border: 1px solid;
+  color: color-mix(in srgb, var(--tag-base) 92%, var(--ink));
+  background: color-mix(in srgb, var(--tag-base) 20%, var(--surface));
+  border-color: color-mix(in srgb, var(--tag-base) 34%, var(--surface));
+}
