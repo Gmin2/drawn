@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState, type CSSProperties, type ReactNode } from "react";
 import { createPortal } from "react-dom";
 import GlideMenu from "./GlideMenu";
+import { Mark, ThemeToggle } from "./Brand";
 import {
   IconArrowBoxLeft,
   IconCheckmark1Small,
@@ -66,7 +67,7 @@ function RailButton({
       data-row
       type="button"
       onClick={onClick}
-      className={`sidebar-row relative z-10 mx-2 flex h-8 items-center rounded-[8px] px-2 text-left transition-[width,background-color,color,transform] duration-150 active:scale-[0.98] ${
+      className={`sidebar-row relative z-10 mx-2 flex h-[34px] items-center rounded-[8px] px-2 text-left transition-[width,background-color,color,transform] duration-150 active:scale-[0.98] ${
         active ? "bg-[var(--hover-2)] group-hover/glide:bg-transparent" : ""
       }`}
     >
@@ -184,6 +185,8 @@ export function SidebarNav({
   onNewChat,
   onPick,
   turns,
+  dark,
+  onThemeChange,
 }: {
   recents: Recent[];
   connectors: { name: string; note: string }[];
@@ -191,6 +194,8 @@ export function SidebarNav({
   onNewChat: () => void;
   onPick: (r: Recent) => void;
   turns: number;
+  dark: boolean;
+  onThemeChange: (v: boolean) => void;
 }) {
   const [collapsed, setCollapsed] = useState(false);
   const [workspaceOpen, setWorkspaceOpen] = useState(false);
@@ -227,7 +232,7 @@ export function SidebarNav({
     <aside
       data-sidebar-collapsed={collapsed}
       aria-label="Workspace navigation"
-      className="relative flex h-full shrink-0 overflow-hidden border-r border-[var(--line)] py-3 transition-[width]"
+      className="group/aside relative flex h-full shrink-0 overflow-hidden border-r border-[var(--line)] py-4 transition-[width]"
       style={
         {
           width: collapsed ? SIDEBAR_MOTION.collapsedWidth : SIDEBAR_MOTION.expandedWidth,
@@ -240,7 +245,20 @@ export function SidebarNav({
       }
     >
       <div className="flex min-h-0 w-[224px] shrink-0 flex-col">
-        <div className="relative mb-2.5 h-10 shrink-0">
+        <div className="px-4">
+          <div className="flex items-start justify-between gap-2">
+            <span className="sidebar-logo block shrink-0">
+              <Mark size={38} />
+            </span>
+            <span className="sidebar-copy">
+              <ThemeToggle dark={dark} onChange={onThemeChange} />
+            </span>
+          </div>
+
+          <h1 className="sidebar-copy mt-5 text-[18px] leading-[1.28] font-semibold tracking-[-0.3px] text-balance text-[var(--ink)]">
+            Generative UI for any MCP server.
+          </h1>
+
           <button
             ref={workspaceButtonRef}
             data-workspace-trigger
@@ -254,17 +272,10 @@ export function SidebarNav({
               }
               setWorkspaceOpen((open) => !open);
             }}
-            className="sidebar-workspace-control absolute top-1 left-2 flex h-8 w-[164px] items-center rounded-[8px] px-2 text-left transition-[background-color,transform] duration-100 hover:bg-[var(--hover-2)] active:scale-[0.99]"
+            className="sidebar-copy -ml-1.5 mt-2.5 flex h-7 items-center gap-1 rounded-[7px] px-1.5 text-[12.5px] text-[var(--ink-3)] transition-colors duration-150 hover:bg-[var(--hover-2)] hover:text-[var(--ink-2)]"
           >
-            <span className="sidebar-logo flex size-5 shrink-0 items-center justify-center text-[var(--accent)]">
-              <IconSparkle size={18} />
-            </span>
-            <span className="sidebar-copy ml-1.5 min-w-0 flex-1 truncate text-[14px] font-medium text-[var(--ink-2)]">
-              {WORKSPACE.name}
-            </span>
-            <span className="sidebar-copy ml-1 flex shrink-0 text-[var(--ink-3)]">
-              <IconChevronDownSmall size={16} />
-            </span>
+            {connectors.length} connectors
+            <IconChevronDownSmall size={14} />
           </button>
 
           {workspaceOpen && (
@@ -275,30 +286,32 @@ export function SidebarNav({
             />
           )}
 
-          <button
-            type="button"
-            aria-label="Collapse sidebar"
-            tabIndex={collapsed ? -1 : 0}
-            onClick={() => {
-              setCollapsed(true);
-              setWorkspaceOpen(false);
-              setSearchOpen(false);
-              setQuery("");
-            }}
-            className="sidebar-collapse-control absolute top-1 right-2 flex size-8 items-center justify-center rounded-[8px] text-[var(--ink-3)] transition-[opacity,background-color,color] duration-150 hover:bg-[var(--hover-2)] hover:text-[var(--ink)]"
-          >
-            <IconSidebarLeftArrow size={18} />
-          </button>
-          <button
-            type="button"
-            aria-label="Expand sidebar"
-            tabIndex={collapsed ? 0 : -1}
-            onClick={() => setCollapsed(false)}
-            className="sidebar-expand-control absolute top-0.5 left-2 flex size-9 items-center justify-center rounded-[8px] text-[var(--ink-3)] transition-[opacity,background-color,color] duration-150 hover:bg-[var(--hover-2)] hover:text-[var(--ink)]"
-          >
-            <IconSidebarLeftArrow size={18} className="rotate-180" />
-          </button>
+          <div className="my-5 border-t border-dashed border-[var(--line-strong)]" />
         </div>
+
+        <button
+          type="button"
+          aria-label="Collapse sidebar"
+          tabIndex={collapsed ? -1 : 0}
+          onClick={() => {
+            setCollapsed(true);
+            setWorkspaceOpen(false);
+            setSearchOpen(false);
+            setQuery("");
+          }}
+          className="sidebar-collapse-control absolute top-3.5 right-3 z-20 flex size-7 items-center justify-center rounded-[7px] text-[var(--ink-3)] opacity-0 transition-[opacity,background-color,color] duration-150 hover:bg-[var(--hover-2)] hover:text-[var(--ink)] focus-visible:opacity-100 group-hover/aside:opacity-100"
+        >
+          <IconSidebarLeftArrow size={16} />
+        </button>
+        <button
+          type="button"
+          aria-label="Expand sidebar"
+          tabIndex={collapsed ? 0 : -1}
+          onClick={() => setCollapsed(false)}
+          className="sidebar-expand-control absolute top-3.5 left-2.5 z-20 flex size-8 items-center justify-center rounded-[7px] text-[var(--ink-3)] transition-[opacity,background-color,color] duration-150 hover:bg-[var(--hover-2)] hover:text-[var(--ink)]"
+        >
+          <IconSidebarLeftArrow size={16} className="rotate-180" />
+        </button>
 
         <GlideGroup>
           <RailButton icon={<IconEditBig size={18} />} label="New session" onClick={onNewChat} />
@@ -316,7 +329,7 @@ export function SidebarNav({
           />
         </GlideGroup>
 
-        <div className="mt-3 min-h-0 flex-1 overflow-y-auto">
+        <div className="mt-4 min-h-0 flex-1 overflow-y-auto">
           <div className="sidebar-copy relative mx-2 mb-1 h-8">
             <div
               aria-hidden={searchOpen}
@@ -396,7 +409,7 @@ export function SidebarNav({
                   type="button"
                   title={item.prompt}
                   onClick={() => onPick(item)}
-                  className={`sidebar-row relative z-10 mx-2 flex h-8 items-center rounded-[8px] px-2 text-left transition-[width,background-color,color,transform] duration-150 active:scale-[0.98] ${
+                  className={`sidebar-row relative z-10 mx-2 flex h-[34px] items-center rounded-[8px] px-2 text-left transition-[width,background-color,color,transform] duration-150 active:scale-[0.98] ${
                     active ? "bg-[var(--hover-2)] group-hover/glide:bg-transparent" : ""
                   }`}
                 >
@@ -422,13 +435,15 @@ export function SidebarNav({
           <div className="px-1 pb-2 text-[12px] text-[var(--ink-3)]">
             {turns} {turns === 1 ? "turn" : "turns"} this session
           </div>
-          <button
-            type="button"
-            onClick={onNewChat}
-            className="flex h-8 w-full items-center justify-center gap-1.5 rounded-[var(--radius-control)] bg-[var(--hover-2)] text-[12.5px] font-medium text-[var(--ink)] transition-[background-color,transform] duration-150 hover:bg-[var(--line-strong)] active:scale-[0.98]"
+          <a
+            href="https://github.com/truefoundry/trueforge"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="flex h-8 w-full items-center justify-center gap-1.5 rounded-full bg-[var(--surface)] text-[12.5px] font-medium text-[var(--ink)] shadow-[var(--shadow-btn)] transition-[background-color,transform] duration-150 hover:bg-[var(--hover)] active:scale-[0.98]"
           >
-            Clear session
-          </button>
+            Running on TrueForge
+            <span className="text-[var(--ink-3)]">→</span>
+          </a>
         </div>
       </div>
     </aside>
