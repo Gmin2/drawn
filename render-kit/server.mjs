@@ -23,6 +23,15 @@ const option = z.object({
   badges: z.array(z.string()).optional(),
 });
 
+const endpoint = z.object({
+  code: z.string().min(1).describe("Short code, e.g. an airport or station code."),
+  place: z.string().optional().describe("Human name of the place."),
+  time: z.string().optional().describe("Time at this end, already formatted."),
+  detail: z.string().optional().describe("Terminal, gate, platform, anything secondary."),
+});
+
+const endpoints = z.object({ from: endpoint, to: endpoint });
+
 const field = z.object({
   label: z.string().min(1),
   value: z.string(),
@@ -74,6 +83,15 @@ function buildServer() {
         fields: z.array(field).default([]),
         body: z.string().optional(),
         badges: z.array(z.string()).optional(),
+        variant: z
+          .enum(["card", "ticket"])
+          .default("card")
+          .describe(
+            "Use 'ticket' when the record is a journey between two places: a flight, a train, a shipment, a transfer. Supply `endpoints` with it.",
+          ),
+        endpoints: endpoints
+          .optional()
+          .describe("Required by the ticket variant. The two ends of the journey."),
       },
     },
     async (args) => echo({ kind: "detail", ...args }),

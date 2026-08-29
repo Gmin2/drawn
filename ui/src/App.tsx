@@ -12,6 +12,7 @@ import {
 } from "./lib/trueforge";
 import { OptionList, type Option } from "./components/OptionList";
 import { DetailCard, type Field } from "./components/DetailCard";
+import { TicketCard, type Endpoint } from "./components/TicketCard";
 import { ConfirmCard } from "./components/ConfirmCard";
 import { ToolChip } from "./components/ToolChip";
 import { Shell } from "./components/Shell";
@@ -157,6 +158,18 @@ export default function App() {
     }
 
     if (b.name === "render_detail") {
+      if (args.variant === "ticket" && args.endpoints) {
+        return (
+          <TicketCard
+            title={args.title as string}
+            subtitle={args.subtitle as string | undefined}
+            endpoints={args.endpoints as { from: Endpoint; to: Endpoint }}
+            fields={(args.fields as Field[]) ?? []}
+            badges={args.badges as string[] | undefined}
+            body={args.body as string | undefined}
+          />
+        );
+      }
       return (
         <DetailCard
           title={args.title as string}
