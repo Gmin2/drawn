@@ -12,8 +12,22 @@ import { ConfirmCard } from "./components/ConfirmCard";
 import { ToolChip } from "./components/ToolChip";
 import { Shell } from "./components/Shell";
 import { LoadingState } from "./components/LoadingState";
+import type { Recent } from "./components/SidebarNav";
 
 const AGENT = "genui-flights";
+
+const CONNECTORS = [
+  { name: "flights", note: "public" },
+  { name: "render-kit", note: "local" },
+];
+
+const PROMPTS: Recent[] = [
+  { id: "sfo-jfk", label: "SFO to JFK in September", prompt: "Find me flights from SFO to JFK on 2026-09-20" },
+  { id: "lhr-cdg", label: "London to Paris next month", prompt: "Find flights from LHR to CDG on 2026-10-05" },
+  { id: "cheapest", label: "Cheapest dates to Lisbon", prompt: "What are the cheapest dates to fly from LHR to LIS in October 2026?" },
+  { id: "nonstop", label: "Nonstop only, SFO to Tokyo", prompt: "Find nonstop flights from SFO to HND on 2026-11-12" },
+  { id: "airports", label: "Airports near Milan", prompt: "Which airports serve Milan?" },
+];
 
 type Bubble =
   | { kind: "user"; text: string }
@@ -163,8 +177,25 @@ export default function App() {
 
   const turns = bubbles.filter((b) => b.kind === "user").length;
 
+  const [activeTitle, setActiveTitle] = useState<string | null>(null);
+
+  function pick(r: Recent) {
+    setActiveTitle(r.label);
+    send(r.prompt);
+  }
+
   return (
-    <Shell onReset={reset} turns={turns}>
+    <Shell
+      onReset={() => {
+        reset();
+        setActiveTitle(null);
+      }}
+      turns={turns}
+      recents={PROMPTS}
+      connectors={CONNECTORS}
+      activeTitle={activeTitle}
+      onPick={pick}
+    >
       <div className="flex min-h-0 flex-1 flex-col px-8 py-9">
         <div className="mb-3 flex items-start gap-2 sm:items-baseline">
           <span className="mt-0.5 font-mono text-[11px] tabular-nums text-[var(--ink-3)] sm:mt-0">

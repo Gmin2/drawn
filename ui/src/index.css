@@ -73,3 +73,60 @@
     animation: none !important;
   }
 }
+
+/* Sidebar collapse choreography, values from the reference. Copy fades and
+   slides left while the rows shrink to icon width, so icons never move. */
+.sidebar-copy {
+  opacity: 1;
+  transform: translate(0);
+  transition:
+    opacity var(--sidebar-copy-duration) ease-out,
+    transform var(--sidebar-copy-duration) var(--sidebar-easing);
+}
+[data-sidebar-collapsed="true"] .sidebar-copy {
+  pointer-events: none;
+  opacity: 0;
+  transform: translateX(calc(var(--sidebar-copy-offset) * -1));
+}
+
+.sidebar-row {
+  width: 208px;
+  transition-duration: var(--sidebar-copy-duration);
+  transition-timing-function: var(--sidebar-easing);
+}
+[data-sidebar-collapsed="true"] .sidebar-row {
+  width: 36px;
+}
+
+.sidebar-glide-highlight {
+  left: 8px;
+  right: 8px;
+}
+[data-sidebar-collapsed="true"] .sidebar-glide-highlight {
+  width: 36px;
+  right: auto;
+}
+
+[data-sidebar-collapsed="true"] .sidebar-workspace-control {
+  pointer-events: none;
+}
+
+.sidebar-collapse-control,
+.sidebar-expand-control,
+.sidebar-logo {
+  transition-duration: var(--sidebar-copy-duration);
+  transition-timing-function: ease-out;
+}
+[data-sidebar-collapsed="true"] .sidebar-collapse-control,
+[data-sidebar-collapsed="true"] .sidebar-logo {
+  pointer-events: none;
+  opacity: 0;
+}
+.sidebar-expand-control {
+  pointer-events: none;
+  opacity: 0;
+}
+[data-sidebar-collapsed="true"] .sidebar-expand-control {
+  pointer-events: auto;
+  opacity: 1;
+}
