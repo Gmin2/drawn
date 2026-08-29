@@ -23,6 +23,7 @@ const AGENT = "genui-flights";
 
 const CONNECTORS = [
   { name: "flights", note: "public" },
+  { name: "github", note: "header auth" },
   { name: "render-kit", note: "local" },
 ];
 
@@ -31,7 +32,7 @@ const PROMPTS = [
   { id: "lhr-cdg", label: "London to Paris next month", prompt: "Find flights from LHR to CDG on 2026-10-05" },
   { id: "cheapest", label: "Cheapest dates to Lisbon", prompt: "What are the cheapest dates to fly from LHR to LIS in October 2026?" },
   { id: "nonstop", label: "Nonstop only, SFO to Tokyo", prompt: "Find nonstop flights from SFO to HND on 2026-11-12" },
-  { id: "airports", label: "Airports near Milan", prompt: "Which airports serve Milan?" },
+  { id: "issues", label: "Open issues on trueforge", prompt: "Show me the open issues on truefoundry/trueforge" },
 ];
 
 type Bubble =
@@ -40,19 +41,38 @@ type Bubble =
   | { kind: "tool"; id: string; name: string; args: Record<string, unknown> }
   | { kind: "error"; text: string };
 
+// Once any connector is deferred, the harness routes every call through
+// `call_tool` as {mcp_server, tool_name, input}. Unwrap that so the renderer
+// keys off the tool the agent actually meant, in either mode. `list_tools` and
+// `get_tool_info` are the harness discovering itself — not worth showing.
+const PLUMBING = new Set(["list_tools", "get_tool_info"]);
+
+function unwrap(name: string, args: Record<string, unknown>) {
+  if (name !== "call_tool") return { name, args };
+  const inner = args.tool_name;
+  if (typeof inner !== "string") return { name, args };
+  const input = args.input;
+  return {
+    name: inner,
+    args: (input && typeof input === "object" ? input : {}) as Record<string, unknown>,
+  };
+}
+
 function eventsToBubbles(events: TurnEvent[]): Bubble[] {
   const out: Bubble[] = [];
   for (const e of events) {
     if (e.type !== "model.message") continue;
     if (e.content) out.push({ kind: "text", text: e.content });
     for (const tc of e.tool_calls ?? []) {
-      let args: Record<string, unknown> = {};
+      let raw: Record<string, unknown> = {};
       try {
-        args = JSON.parse(tc.function.arguments);
+        raw = JSON.parse(tc.function.arguments);
       } catch {
-        args = { raw: tc.function.arguments };
+        raw = { raw: tc.function.arguments };
       }
-      out.push({ kind: "tool", id: tc.id, name: tc.function.name, args });
+      if (PLUMBING.has(tc.function.name)) continue;
+      const { name, args } = unwrap(tc.function.name, raw);
+      out.push({ kind: "tool", id: tc.id, name, args });
     }
   }
   return out;
@@ -248,10 +268,10 @@ export default function App() {
           </span>
           <div className="min-w-0 sm:flex sm:items-baseline sm:gap-2">
             <h3 className="text-[13px] font-semibold whitespace-nowrap text-[var(--ink)]">
-              Flight search
+              Live connectors
             </h3>
             <p className="mt-0.5 text-[12.5px] text-pretty text-[var(--ink-3)] sm:mt-0">
-              Live connector data, drawn by the agent as pickable interface.
+              Flights, GitHub and your own tools, drawn as interface instead of JSON.
             </p>
           </div>
         </div>
