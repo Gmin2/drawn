@@ -196,7 +196,7 @@ export default function App() {
       activeTitle={activeTitle}
       onPick={pick}
     >
-      <div className="flex min-h-0 flex-1 flex-col px-8 py-9">
+      <div className="flex min-h-0 flex-1 flex-col px-12 py-9">
         <div className="mb-3 flex items-start gap-2 sm:items-baseline">
           <span className="mt-0.5 font-mono text-[11px] tabular-nums text-[var(--ink-3)] sm:mt-0">
             01

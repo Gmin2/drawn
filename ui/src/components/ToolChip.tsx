@@ -48,7 +48,7 @@ export function ToolChip({ name, args }: { name: string; args: Record<string, un
           initial={{ opacity: 0, height: 0 }}
           animate={{ opacity: 1, height: "auto" }}
           transition={{ duration: 0.25, ease: ease.out }}
-          className="mt-1 overflow-x-auto rounded-[var(--radius-chip)] bg-[var(--canvas)] p-2.5 font-mono text-[11px] leading-relaxed text-[var(--ink-2)]"
+          className="mt-1.5 overflow-x-auto rounded-[var(--radius-control)] bg-[var(--surface)] p-3 font-mono text-[11px] leading-relaxed text-[var(--ink-2)] shadow-[var(--shadow-hairline)]"
         >
           {JSON.stringify(args, null, 2)}
         </motion.pre>

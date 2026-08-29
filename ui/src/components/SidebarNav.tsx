@@ -250,7 +250,21 @@ export function SidebarNav({
             <span className="sidebar-logo block shrink-0">
               <Mark size={38} />
             </span>
-            <span className="sidebar-copy">
+            <span className="sidebar-copy flex items-center gap-1">
+              <button
+                type="button"
+                aria-label="Collapse sidebar"
+                tabIndex={collapsed ? -1 : 0}
+                onClick={() => {
+                  setCollapsed(true);
+                  setWorkspaceOpen(false);
+                  setSearchOpen(false);
+                  setQuery("");
+                }}
+                className="grid size-7 place-items-center rounded-[7px] text-[var(--ink-3)] opacity-0 transition-[opacity,background-color,color] duration-150 group-hover/aside:opacity-100 hover:bg-[var(--hover-2)] hover:text-[var(--ink)] focus-visible:opacity-100"
+              >
+                <IconSidebarLeftArrow size={16} />
+              </button>
               <ThemeToggle dark={dark} onChange={onThemeChange} />
             </span>
           </div>
@@ -289,20 +303,6 @@ export function SidebarNav({
           <div className="my-5 border-t border-dashed border-[var(--line-strong)]" />
         </div>
 
-        <button
-          type="button"
-          aria-label="Collapse sidebar"
-          tabIndex={collapsed ? -1 : 0}
-          onClick={() => {
-            setCollapsed(true);
-            setWorkspaceOpen(false);
-            setSearchOpen(false);
-            setQuery("");
-          }}
-          className="sidebar-collapse-control absolute top-3.5 right-3 z-20 flex size-7 items-center justify-center rounded-[7px] text-[var(--ink-3)] opacity-0 transition-[opacity,background-color,color] duration-150 hover:bg-[var(--hover-2)] hover:text-[var(--ink)] focus-visible:opacity-100 group-hover/aside:opacity-100"
-        >
-          <IconSidebarLeftArrow size={16} />
-        </button>
         <button
           type="button"
           aria-label="Expand sidebar"
