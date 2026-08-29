@@ -173,10 +173,17 @@ export default function App() {
           onPick={
             pickable
               ? (option) =>
+                  // No domain words here. This component renders flights, issues
+                  // and pull requests from the same tool, so anything that reads
+                  // like one of them is wrong for the other two.
                   send(
-                    `I'll take the ${option.primary} flight${
-                      option.secondary ? ` on ${option.secondary}` : ""
-                    }${option.value ? ` for ${option.value}` : ""}.`,
+                    [
+                      `I'll take: ${option.primary}`,
+                      option.secondary,
+                      option.value,
+                    ]
+                      .filter(Boolean)
+                      .join(" · "),
                   )
               : undefined
           }
@@ -227,7 +234,7 @@ export default function App() {
           consequence={args.consequence as string}
           confirmLabel={(args.confirmLabel as string) ?? "Confirm"}
           fields={(args.fields as Field[]) ?? []}
-          settled={isPending ? undefined : decided[b.id]}
+          settled={isPending ? undefined : (decided[b.id] ?? "stale")}
           onDecide={(approved) => decide(b.id, approved)}
         />
       );
@@ -249,7 +256,7 @@ export default function App() {
       setSessionId(session.id);
       setBubbles(next);
       setPending(replay.requiredActions);
-      setDecided({});
+      setDecided(replay.decisions);
       localStorage.setItem("genui:last-session", session.id);
     } catch (err) {
       setBubbles([

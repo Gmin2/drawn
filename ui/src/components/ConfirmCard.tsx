@@ -10,7 +10,7 @@ export type ConfirmCardProps = {
   confirmLabel: string;
   fields: Field[];
   onDecide?: (approved: boolean) => void;
-  settled?: "allow" | "deny";
+  settled?: "allow" | "deny" | "stale";
 };
 
 const SAMPLE: ConfirmCardProps = {
@@ -83,7 +83,14 @@ export function ConfirmCard({
               : "bg-[var(--inset)] text-[var(--ink-3)]"
           }`}
         >
-          {settled === "allow" ? "Approved" : "Declined"}
+          {/* "stale" is a card from a turn that is no longer resumable — an
+              errored turn, usually. Say so rather than offering buttons whose
+              handler would find no pending action and silently return. */}
+          {settled === "allow"
+            ? "Approved"
+            : settled === "deny"
+              ? "Declined"
+              : "No longer awaiting a decision"}
         </motion.div>
       ) : (
         <div className="flex flex-row gap-2">

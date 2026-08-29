@@ -68,6 +68,22 @@ export async function loadSession(sessionId: string) {
   }
   for (const list of byTurn.values()) list.reverse();
 
+  // A gated call that was allowed comes back with the tool's own result; one
+  // that was denied comes back as {"error":[...]"User denied tool call: ..."}.
+  // That is the only way to recover a past decision, since the in-memory map
+  // does not survive a reload.
+  const decisions: Record<string, "allow" | "deny"> = {};
+  for (const { event } of wrapped) {
+    if (event.type !== "tool.response" || !event.tool_call_id) continue;
+    let denied = false;
+    try {
+      denied = "error" in (JSON.parse(event.content ?? "{}") as object);
+    } catch {
+      // a non-JSON body is a tool result, not a denial envelope
+    }
+    decisions[event.tool_call_id] = denied ? "deny" : "allow";
+  }
+
   const last = turns[turns.length - 1];
   return {
     turns: turns.map((t) => ({
@@ -77,6 +93,7 @@ export async function loadSession(sessionId: string) {
       events: byTurn.get(t.id) ?? [],
     })),
     requiredActions: last?.state?.required_actions ?? [],
+    decisions,
   };
 }
 
