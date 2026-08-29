@@ -54,33 +54,33 @@ export function ConfirmCard({
       initial={{ opacity: 0, y: 12, filter: "blur(4px)" }}
       animate={{ opacity: 1, y: 0, filter: "blur(0px)" }}
       transition={spring.gentle}
-      className="flex flex-col gap-3 rounded-lg border border-amber-900/40 bg-zinc-900 p-4"
+      className="flex flex-col gap-3 rounded-[var(--radius-card)] border border-[var(--orange-tint)] bg-[var(--surface)] shadow-[var(--shadow-card)] p-4"
     >
-      <div className="text text-base font-medium text-zinc-100">{title}</div>
-      <div className="text text-sm text-zinc-300">{summary}</div>
+      <div className="text-[13px] font-medium text-[var(--ink)]">{title}</div>
+      <div className="text-[12.5px] text-[var(--ink-2)]">{summary}</div>
 
       {fields.length > 0 && (
-        <div className="flex flex-col gap-1 rounded-md bg-zinc-950/60 p-3">
+        <div className="flex flex-col gap-1 rounded-[var(--radius-chip)] bg-[var(--inset)] p-3">
           {fields.map((field) => (
             <div key={field.label} className="flex flex-row justify-between gap-4">
-              <div className="text text-xs text-zinc-500">{field.label}</div>
-              <div className="text truncate text-xs text-zinc-300">{field.value}</div>
+              <div className="text-[11px] text-[var(--ink-3)]">{field.label}</div>
+              <div className="truncate text-[11px] text-[var(--ink-2)]">{field.value}</div>
             </div>
           ))}
         </div>
       )}
 
-      <div className="text text-xs leading-relaxed text-amber-500/90">{consequence}</div>
+      <div className="text-[11px] leading-relaxed text-[var(--orange)]">{consequence}</div>
 
       {settled ? (
         <motion.div
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           transition={DECIDE}
-          className={`text rounded-md px-3 py-2 text-sm ${
+          className={`rounded-[var(--radius-chip)] px-3 py-2 text-[12.5px] ${
             settled === "allow"
-              ? "bg-emerald-500/10 text-emerald-400"
-              : "bg-zinc-800 text-zinc-400"
+              ? "bg-[var(--green-tint)] text-[var(--green)]"
+              : "bg-[var(--inset)] text-[var(--ink-3)]"
           }`}
         >
           {settled === "allow" ? "Approved" : "Declined"}
@@ -93,7 +93,7 @@ export function ConfirmCard({
             onClick={() => decide(true)}
             whileTap={{ scale: 0.97 }}
             transition={DECIDE}
-            className="flex-1 rounded-md bg-zinc-100 px-3 py-2 text-sm font-medium text-zinc-900 disabled:opacity-40"
+            className="flex-1 rounded-[var(--radius-chip)] bg-[var(--accent)] px-3 py-2 text-[12.5px] font-medium text-white disabled:opacity-40"
           >
             {confirmLabel}
           </motion.button>
@@ -103,7 +103,7 @@ export function ConfirmCard({
             onClick={() => decide(false)}
             whileTap={{ scale: 0.97 }}
             transition={DECIDE}
-            className="rounded-md bg-zinc-800 px-3 py-2 text-sm text-zinc-300 disabled:opacity-40"
+            className="rounded-[var(--radius-chip)] bg-[var(--inset)] px-3 py-2 text-[12.5px] text-[var(--ink-2)] disabled:opacity-40"
           >
             Cancel
           </motion.button>

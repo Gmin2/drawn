@@ -9,6 +9,8 @@ import {
 import { OptionList, type Option } from "./components/OptionList";
 import { DetailCard, type Field } from "./components/DetailCard";
 import { ConfirmCard } from "./components/ConfirmCard";
+import { ToolChip } from "./components/ToolChip";
+import { Shell } from "./components/Shell";
 
 const AGENT = "genui-flights";
 
@@ -148,33 +150,66 @@ export default function App() {
       );
     }
 
-    return (
-      <div className="rounded-lg bg-zinc-900 p-3">
-        <div className="mb-2 text-xs text-zinc-500">{b.name}</div>
-        <pre className="overflow-x-auto text-xs text-zinc-300">
-          {JSON.stringify(args, null, 2)}
-        </pre>
-      </div>
-    );
+    return <ToolChip name={b.name} args={args} />;
+  }
+
+  function reset() {
+    setSessionId(null);
+    setBubbles([]);
+    setPending([]);
+    setDecided({});
   }
 
   return (
-    <div className="flex h-dvh justify-center bg-zinc-950 text-zinc-100">
-      <div className="flex w-full max-w-[500px] flex-col gap-4 px-4 py-8">
-        <div className="flex flex-1 flex-col gap-4 overflow-y-auto">
-          {bubbles.map((b, i) => (
-            <div key={i}>
-              {b.kind === "user" && <div className="text-zinc-400">{b.text}</div>}
-              {b.kind === "text" && (
-                <div className="whitespace-pre-wrap text-zinc-200">{b.text}</div>
-              )}
-              {b.kind === "error" && (
-                <div className="rounded-lg bg-red-950 p-3 text-sm text-red-300">{b.text}</div>
-              )}
-              {b.kind === "tool" && renderTool(b)}
-            </div>
-          ))}
-          {busy && <div className="text-sm text-zinc-500">thinking…</div>}
+    <Shell onReset={reset}>
+      <div className="flex min-h-0 flex-1 flex-col">
+        <header className="flex items-baseline gap-2 border-b border-[var(--line)] px-6 py-3">
+          <span className="font-mono text-[11px] tabular-nums text-[var(--ink-3)]">01</span>
+          <h1 className="text-[13px] font-semibold">Flight search</h1>
+          <p className="truncate text-[12.5px] text-[var(--ink-3)]">
+            Live Kiwi data, rendered by the agent as pickable interface.
+          </p>
+        </header>
+
+        <div className="flex-1 overflow-y-auto px-6 py-5">
+          <div className="mx-auto flex w-full max-w-[560px] flex-col gap-3.5">
+            {bubbles.length === 0 && (
+              <p className="text-[12.5px] leading-relaxed text-[var(--ink-3)]">
+                Ask for a route and a date. The agent calls the flight connector, then
+                draws the results with its own components instead of describing them.
+              </p>
+            )}
+
+            {bubbles.map((b, i) => (
+              <div key={i}>
+                {b.kind === "user" && (
+                  <div className="flex justify-end">
+                    <div className="max-w-[85%] rounded-[var(--radius-control)] bg-[var(--field)] px-3 py-1.5 text-[13px] text-[var(--ink)]">
+                      {b.text}
+                    </div>
+                  </div>
+                )}
+                {b.kind === "text" && (
+                  <div className="text-[13px] leading-relaxed whitespace-pre-wrap text-[var(--ink-2)]">
+                    {b.text}
+                  </div>
+                )}
+                {b.kind === "error" && (
+                  <div className="rounded-[var(--radius-card)] bg-[var(--red-tint)] px-3 py-2 text-[12.5px] text-[var(--red)]">
+                    {b.text}
+                  </div>
+                )}
+                {b.kind === "tool" && renderTool(b)}
+              </div>
+            ))}
+
+            {busy && (
+              <div className="flex items-center gap-2 text-[12.5px] text-[var(--ink-3)]">
+                <span className="size-1.5 animate-pulse rounded-full bg-[var(--accent)]" />
+                working
+              </div>
+            )}
+          </div>
         </div>
 
         <form
@@ -182,23 +217,28 @@ export default function App() {
             e.preventDefault();
             send(input);
           }}
-          className="flex gap-2"
+          className="border-t border-[var(--line)] px-6 py-4"
         >
-          <input
-            value={input}
-            onChange={(e) => setInput(e.target.value)}
-            placeholder="Send a message…"
-            className="flex-1 rounded-lg bg-zinc-900 px-3 py-2 text-base outline-none"
-          />
-          <button
-            type="submit"
-            disabled={busy}
-            className="rounded-lg bg-zinc-100 px-4 py-2 text-zinc-900 disabled:opacity-40"
-          >
-            Send
-          </button>
+          <div className="mx-auto flex w-full max-w-[560px] items-center gap-2 rounded-[var(--radius-control)] bg-[var(--field)] px-3 py-2 shadow-[var(--shadow-inset-field)]">
+            <input
+              value={input}
+              onChange={(e) => setInput(e.target.value)}
+              placeholder="Ask for a route and a date…"
+              className="min-w-0 flex-1 bg-transparent text-[13px] text-[var(--ink)] outline-none placeholder:text-[var(--ink-3)]"
+            />
+            <button
+              type="submit"
+              disabled={busy || !input.trim()}
+              aria-label="Send"
+              className="grid size-7 shrink-0 place-items-center rounded-[var(--radius-chip)] bg-[var(--accent)] text-white transition-opacity disabled:opacity-30"
+            >
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
+                <path d="M12 19V5M5 12l7-7 7 7" />
+              </svg>
+            </button>
+          </div>
         </form>
       </div>
-    </div>
+    </Shell>
   );
 }

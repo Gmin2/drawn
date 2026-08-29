@@ -1,1 +1,52 @@
 @import "tailwindcss";
+@import "./theme.css";
+
+html,
+body,
+#root {
+  height: 100%;
+}
+
+body {
+  background: var(--page);
+  color: var(--ink);
+  font-feature-settings: "cv11", "ss01";
+  -webkit-font-smoothing: antialiased;
+}
+
+/* The diagonal hatch that frames the content column on wide screens. */
+.hatch {
+  background-image: repeating-linear-gradient(
+    -45deg,
+    var(--stripe) 0 1px,
+    transparent 1px 7px
+  );
+  background-color: var(--stripe-bg);
+}
+
+/* Skeleton masking, lifted from the Vercel reference: render the real component
+   with sample data and turn its text into pulsing bars. Keyed off a data
+   attribute rather than a class prefix so class order cannot break it. */
+[data-skeleton] [data-sk="text"] {
+  color: transparent !important;
+  border-radius: 4px;
+  background: color-mix(in oklch, var(--ink) 18%, transparent);
+  animation: sk-pulse 1.6s ease-in-out infinite;
+  user-select: none;
+}
+[data-skeleton] [data-sk="hide"] {
+  opacity: 0 !important;
+}
+[data-skeleton] * {
+  pointer-events: none !important;
+}
+
+@keyframes sk-pulse {
+  0%,
+  100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.55;
+  }
+}

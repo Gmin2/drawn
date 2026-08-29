@@ -35,11 +35,11 @@ export function DetailCard({
       initial={{ opacity: 0, y: 10, filter: "blur(4px)" }}
       animate={{ opacity: 1, y: 0, filter: "blur(0px)" }}
       transition={spring.soft}
-      className="flex flex-col gap-3 rounded-lg bg-zinc-900 p-4"
+      className="flex flex-col gap-3 rounded-[var(--radius-card)] bg-[var(--surface)] shadow-[var(--shadow-card)] p-4"
     >
       <div className="flex flex-col gap-0.5">
-        <div className="text text-lg font-medium text-zinc-100">{title}</div>
-        {subtitle && <div className="text text-sm text-zinc-400">{subtitle}</div>}
+        <div className="text-[15px] font-medium text-[var(--ink)]">{title}</div>
+        {subtitle && <div className="text-[12.5px] text-[var(--ink-3)]">{subtitle}</div>}
       </div>
 
       {badges && badges.length > 0 && (
@@ -50,7 +50,7 @@ export function DetailCard({
               initial={{ opacity: 0, scale: 0.9 }}
               animate={{ opacity: 1, scale: 1 }}
               transition={{ ...spring.glide, delay: 0.1 + i * 0.04 }}
-              className="text rounded-md bg-zinc-800 px-2 py-0.5 text-xs text-zinc-300"
+              className="rounded-[var(--radius-chip)] bg-[var(--inset)] px-2 py-0.5 text-[11px] text-[var(--ink-2)]"
             >
               {badge}
             </motion.span>
@@ -58,7 +58,7 @@ export function DetailCard({
         </div>
       )}
 
-      <div className="h-px bg-zinc-800" />
+      <div className="h-px bg-[var(--line)]" />
 
       <div className="grid grid-cols-2 gap-x-6 gap-y-2">
         {fields.map((field, i) => (
@@ -69,13 +69,13 @@ export function DetailCard({
             transition={{ duration: 0.32, delay: 0.12 + i * 0.04, ease: ease.out }}
             className="flex flex-col gap-0.5"
           >
-            <div className="text text-xs text-zinc-500">{field.label}</div>
-            <div className="text text-sm text-zinc-200">{field.value}</div>
+            <div className="text-[11px] text-[var(--ink-3)]">{field.label}</div>
+            <div className="text-[12.5px] text-[var(--ink-2)]">{field.value}</div>
           </motion.div>
         ))}
       </div>
 
-      {body && <div className="text text-sm leading-relaxed text-zinc-400">{body}</div>}
+      {body && <div className="text-[12.5px] leading-relaxed text-[var(--ink-3)]">{body}</div>}
     </motion.div>
   );
 }

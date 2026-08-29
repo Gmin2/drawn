@@ -62,8 +62,8 @@ export function OptionList({
   disabled,
 }: Partial<OptionListProps>) {
   return (
-    <div className="flex flex-col rounded-lg bg-zinc-900">
-      <div className="text border-b border-zinc-800 px-4 py-2.5 text-sm font-medium text-zinc-400">
+    <div className="flex flex-col rounded-[var(--radius-card)] bg-[var(--surface)] shadow-[var(--shadow-card)]">
+      <div className="border-b border-[var(--line)] px-4 py-2.5 text-[12.5px] font-medium text-[var(--ink-3)]">
         {title}
       </div>
 
@@ -78,31 +78,31 @@ export function OptionList({
             animate={{ opacity: 1, y: 0, filter: "blur(0px)" }}
             transition={{ ...spring.glide, delay: 0.06 + index * 0.03 }}
             whileTap={disabled ? undefined : { scale: 0.99 }}
-            className="group flex w-full flex-row items-center gap-4 border-b border-zinc-800 py-3 text-left last:border-none disabled:cursor-not-allowed"
+            className="group flex w-full flex-row items-center gap-4 border-b border-[var(--line)] py-3 text-left last:border-none disabled:cursor-not-allowed"
           >
             <div className="flex w-full flex-col gap-0.5">
-              <div className="text text-base font-medium text-zinc-100 group-hover:underline">
+              <div className="text-[13px] font-medium text-[var(--ink)] group-hover:underline">
                 {option.primary}
               </div>
               {option.secondary && (
-                <div className="text text-sm text-zinc-400">{option.secondary}</div>
+                <div className="text-[12.5px] text-[var(--ink-3)]">{option.secondary}</div>
               )}
               <div className="flex flex-row items-center gap-2">
                 {option.tertiary && (
-                  <div className="text text-xs text-zinc-500">{option.tertiary}</div>
+                  <div className="text-[11px] text-[var(--ink-3)]">{option.tertiary}</div>
                 )}
                 {option.meta && (
-                  <div className="text text-xs text-zinc-500">{option.meta}</div>
+                  <div className="text-[11px] text-[var(--ink-3)]">{option.meta}</div>
                 )}
               </div>
             </div>
 
             <div className="flex w-32 shrink-0 flex-col items-end gap-0.5">
               {option.value && (
-                <div className="text text-base text-emerald-500">{option.value}</div>
+                <div className="text-[13px] text-[var(--green)]">{option.value}</div>
               )}
               {option.valueLabel && (
-                <div className="text text-xs text-zinc-500">{option.valueLabel}</div>
+                <div className="text-[11px] text-[var(--ink-3)]">{option.valueLabel}</div>
               )}
             </div>
           </motion.button>
