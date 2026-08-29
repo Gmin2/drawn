@@ -4,8 +4,6 @@ import {
   createSession,
   listSessions,
   loadSession,
-  runApproval,
-  runTurn,
   type RequiredAction,
   type SessionSummary,
   type TurnEvent,
@@ -19,6 +17,7 @@ import { ToolChip } from "./components/ToolChip";
 import { Shell } from "./components/Shell";
 import { LoadingState } from "./components/LoadingState";
 import type { SessionItem } from "./components/SidebarNav";
+import { streamTurn, type StreamUpdate } from "./lib/stream";
 
 const AGENT = "genui-flights";
 
@@ -43,10 +42,10 @@ const PROMPTS = [
 ];
 
 type Bubble =
-  | { kind: "user"; text: string }
-  | { kind: "text"; text: string }
-  | { kind: "tool"; id: string; name: string; args: Record<string, unknown> }
-  | { kind: "error"; text: string };
+  | { kind: "user"; key: string; text: string }
+  | { kind: "text"; key: string; text: string }
+  | { kind: "tool"; key: string; id: string; name: string; args: Record<string, unknown>; streaming: boolean }
+  | { kind: "error"; key: string; text: string };
 
 // Once any connector is deferred, the harness routes every call through
 // `call_tool` as {mcp_server, tool_name, input}. Unwrap that so the renderer
@@ -69,7 +68,7 @@ function eventsToBubbles(events: TurnEvent[]): Bubble[] {
   const out: Bubble[] = [];
   for (const e of events) {
     if (e.type !== "model.message") continue;
-    if (e.content) out.push({ kind: "text", text: e.content });
+    if (e.content) out.push({ kind: "text", key: e.id, text: e.content });
     for (const tc of e.tool_calls ?? []) {
       let raw: Record<string, unknown> = {};
       try {
@@ -79,7 +78,7 @@ function eventsToBubbles(events: TurnEvent[]): Bubble[] {
       }
       if (PLUMBING.has(tc.function.name)) continue;
       const { name, args } = unwrap(tc.function.name, raw);
-      out.push({ kind: "tool", id: tc.id, name, args });
+      out.push({ kind: "tool", key: tc.id, id: tc.id, name, args, streaming: false });
     }
   }
   return out;
@@ -106,19 +105,59 @@ export default function App() {
     void refreshSessions();
   }, []);
 
-  function absorb(turn: Awaited<ReturnType<typeof runTurn>>) {
-    if (turn.status === "error") {
-      setBubbles((b) => [...b, { kind: "error", text: turn.message ?? "turn failed" }]);
+
+  // Bubbles are upserted by key so a streaming update rewrites the same bubble
+  // rather than appending a new one on every fragment.
+  function upsert(next: Bubble) {
+    setBubbles((b) => {
+      const i = b.findIndex((x) => x.key === next.key);
+      if (i === -1) return [...b, next];
+      const copy = [...b];
+      copy[i] = next;
+      return copy;
+    });
+  }
+
+  function onUpdate(u: StreamUpdate) {
+    if (u.kind === "text") {
+      upsert({ kind: "text", key: u.key, text: u.text });
       return;
     }
-    setBubbles((b) => [...b, ...eventsToBubbles(turn.events)]);
-    setPending(turn.requiredActions);
+    if (u.kind === "tool") {
+      if (PLUMBING.has(u.name)) return;
+      let raw: Record<string, unknown> = {};
+      try {
+        raw = JSON.parse(u.argsText);
+      } catch {
+        // arguments are still arriving, so the JSON is legitimately incomplete
+      }
+      const { name, args } = unwrap(u.name, raw);
+      upsert({ kind: "tool", key: u.key, id: u.callId, name, args, streaming: !u.done });
+      return;
+    }
+    if (u.kind === "settled") {
+      // required actions are applied here so an approval card appears the
+      // moment the turn pauses, not after the stream closes
+      setPending(u.requiredActions);
+    }
+  }
+
+  async function runInput(sid: string, input: unknown[]) {
+    const settled = await streamTurn(sid, input, onUpdate);
+    if (settled.status === "error") {
+      upsert({
+        kind: "error",
+        key: `err-${Date.now()}`,
+        text: settled.message ?? "turn failed",
+      });
+    }
+    setPending(settled.requiredActions);
   }
 
   async function send(text: string) {
     if (!text.trim() || busy) return;
     setBusy(true);
-    setBubbles((b) => [...b, { kind: "user", text }]);
+    upsert({ kind: "user", key: `user-${Date.now()}`, text });
     setInput("");
     try {
       let sid = sessionId;
@@ -126,13 +165,14 @@ export default function App() {
         sid = (await createSession(AGENT)).id;
         setSessionId(sid);
       }
-      absorb(await runTurn(sid, text));
+      await runInput(sid, [{ type: "user.message", content: text }]);
       void refreshSessions();
     } catch (err) {
-      setBubbles((b) => [
-        ...b,
-        { kind: "error", text: err instanceof Error ? err.message : String(err) },
-      ]);
+      upsert({
+        kind: "error",
+        key: `err-${Date.now()}`,
+        text: err instanceof Error ? err.message : String(err),
+      });
     } finally {
       setBusy(false);
     }
@@ -146,12 +186,20 @@ export default function App() {
     setPending((p) => p.filter((a) => a !== action));
     setBusy(true);
     try {
-      absorb(await runApproval(sessionId, action.thread_id, toolCallId, status));
-    } catch (err) {
-      setBubbles((b) => [
-        ...b,
-        { kind: "error", text: err instanceof Error ? err.message : String(err) },
+      await runInput(sessionId, [
+        {
+          type: "user.tool_approval",
+          thread_id: action.thread_id,
+          tool_call_id: toolCallId,
+          approval: { status },
+        },
       ]);
+    } catch (err) {
+      upsert({
+        kind: "error",
+        key: `err-${Date.now()}`,
+        text: err instanceof Error ? err.message : String(err),
+      });
     } finally {
       setBusy(false);
     }
@@ -250,7 +298,7 @@ export default function App() {
       const replay = await loadSession(session.id);
       const next: Bubble[] = [];
       for (const turn of replay.turns) {
-        for (const text of turn.userMessages) next.push({ kind: "user", text });
+        for (const text of turn.userMessages) next.push({ kind: "user", key: `replay-${next.length}`, text });
         next.push(...eventsToBubbles(turn.events));
       }
       setSessionId(session.id);
@@ -260,7 +308,7 @@ export default function App() {
       localStorage.setItem("genui:last-session", session.id);
     } catch (err) {
       setBubbles([
-        { kind: "error", text: err instanceof Error ? err.message : String(err) },
+        { kind: "error", key: "replay-error", text: err instanceof Error ? err.message : String(err) },
       ]);
     } finally {
       setBusy(false);
