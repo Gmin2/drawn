@@ -163,7 +163,7 @@ export default function App() {
   return (
     <Shell onReset={reset}>
       <div className="flex min-h-0 flex-1 flex-col">
-        <header className="flex items-baseline gap-2 border-b border-[var(--line)] px-6 py-3">
+        <header className="flex items-baseline gap-2 border-b border-[var(--line)] px-5 py-2.5">
           <span className="font-mono text-[11px] tabular-nums text-[var(--ink-3)]">01</span>
           <h1 className="text-[13px] font-semibold">Flight search</h1>
           <p className="truncate text-[12.5px] text-[var(--ink-3)]">
@@ -171,8 +171,8 @@ export default function App() {
           </p>
         </header>
 
-        <div className="flex-1 overflow-y-auto px-6 py-5">
-          <div className="mx-auto flex w-full max-w-[560px] flex-col gap-3.5">
+        <div className="flex-1 overflow-y-auto px-5 py-4">
+          <div className="mx-auto flex w-full max-w-[468px] flex-col gap-3">
             {bubbles.length === 0 && (
               <p className="text-[12.5px] leading-relaxed text-[var(--ink-3)]">
                 Ask for a route and a date. The agent calls the flight connector, then
@@ -217,9 +217,9 @@ export default function App() {
             e.preventDefault();
             send(input);
           }}
-          className="border-t border-[var(--line)] px-6 py-4"
+          className="border-t border-[var(--line)] px-5 py-3.5"
         >
-          <div className="mx-auto flex w-full max-w-[560px] items-center gap-2 rounded-[var(--radius-control)] bg-[var(--field)] px-3 py-2 shadow-[var(--shadow-inset-field)]">
+          <div className="mx-auto flex w-full max-w-[468px] items-center gap-2 rounded-[var(--radius-control)] bg-[var(--field)] px-3 py-2 shadow-[var(--shadow-inset-field)]">
             <input
               value={input}
               onChange={(e) => setInput(e.target.value)}
