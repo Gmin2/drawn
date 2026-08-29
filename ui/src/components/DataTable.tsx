@@ -45,7 +45,9 @@ export function DataTable({
   columns = SAMPLE.columns,
   rows = SAMPLE.rows,
 }: Partial<DataTableProps>) {
-  const [filter, setFilter] = useState<string>("all");
+  // null rather than "all": status is an unrestricted string, so any sentinel
+  // drawn from the same space could collide with a real status.
+  const [filter, setFilter] = useState<string | null>(null);
 
   const statuses = useMemo(() => {
     const seen = new Map<string, number>();
@@ -83,8 +85,8 @@ export function DataTable({
             <Chip
               label="All"
               count={rows.length}
-              active={filter === "all"}
-              onClick={() => setFilter("all")}
+              active={filter === null}
+              onClick={() => setFilter(null)}
             />
             {statuses.map(([status, count], i) => (
               <Chip
@@ -101,20 +103,21 @@ export function DataTable({
       </div>
 
       <div
-        role="region"
-        aria-label={title}
-        tabIndex={0}
         className="overflow-x-auto rounded-[var(--radius-card)] bg-[var(--surface)] shadow-[var(--shadow-card)]"
         style={{ scrollbarWidth: "none" }}
       >
-        <div className="min-w-[440px]">
+        {/* CSS grid rather than a real <table> so rows can animate their own
+            track, so the table roles are supplied explicitly */}
+        <div role="table" aria-label={title} aria-rowcount={rows.length + 1} className="min-w-[440px]">
           <div
+            role="row"
             className="grid border-b border-[var(--line)] text-[12px] font-medium text-[var(--ink-2)]"
             style={{ gridTemplateColumns: template }}
           >
             {heads.map((column, i) => (
               <span
                 key={column}
+                role="columnheader"
                 className={`px-3 py-2 ${i < heads.length - 1 ? "border-r border-[var(--line)]" : ""}`}
               >
                 {column}
@@ -123,10 +126,12 @@ export function DataTable({
           </div>
 
           {rows.map((row) => {
-            const shown = filter === "all" || row.status === filter;
+            const shown = filter === null || row.status === filter;
             return (
               <div
                 key={row.id}
+                aria-hidden={!shown}
+                {...(!shown ? { inert: "" as const } : {})}
                 className="grid transition-[grid-template-rows,opacity] duration-300"
                 style={{
                   gridTemplateRows: shown ? "1fr" : "0fr",
@@ -136,12 +141,16 @@ export function DataTable({
               >
                 <div className="overflow-hidden">
                   <div
+                    role="row"
                     className="grid border-b border-[var(--line)] text-[12.5px] transition-colors duration-100 hover:bg-[var(--hover)]"
                     style={{ gridTemplateColumns: template }}
                   >
-                    {row.cells.map((cell, i) => (
+                    {/* replayed sessions can carry payloads that predate the server-side
+                        check, so clamp to the declared columns here too */}
+                    {row.cells.slice(0, columns.length).map((cell, i) => (
                       <span
                         key={i}
+                        role="cell"
                         className={`flex min-w-0 items-center border-r border-[var(--line)] px-3 py-2 ${
                           i === 0 ? "font-medium text-[var(--ink)]" : "text-[var(--ink-2)]"
                         }`}
@@ -150,7 +159,7 @@ export function DataTable({
                       </span>
                     ))}
                     {statuses.length > 0 && (
-                      <span className="flex min-w-0 items-center px-3 py-2">
+                      <span role="cell" className="flex min-w-0 items-center px-3 py-2">
                         {row.status ? (
                           <span
                             className="drawn-pill inline-flex h-[23px] shrink-0 items-center rounded-[8px] px-[7px] text-[12.5px] font-medium whitespace-nowrap"

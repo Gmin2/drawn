@@ -118,7 +118,24 @@ function buildServer() {
         rows: z.array(tableRow).min(1),
       },
     },
-    async (args) => echo({ kind: "table", ...args }),
+    async (args) => {
+      const bad = args.rows.filter((row) => row.cells.length !== args.columns.length);
+      if (bad.length > 0) {
+        return {
+          isError: true,
+          content: [
+            {
+              type: "text",
+              text:
+                `Every row needs exactly one cell per column. ${args.columns.length} columns were ` +
+                `declared, but ${bad.length} row(s) did not match, starting with id "${bad[0].id}" ` +
+                `which has ${bad[0].cells.length}. Pad short rows with an empty string.`,
+            },
+          ],
+        };
+      }
+      return echo({ kind: "table", ...args });
+    },
   );
 
   server.registerTool(
