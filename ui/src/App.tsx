@@ -11,6 +11,7 @@ import { DetailCard, type Field } from "./components/DetailCard";
 import { ConfirmCard } from "./components/ConfirmCard";
 import { ToolChip } from "./components/ToolChip";
 import { Shell } from "./components/Shell";
+import { LoadingState } from "./components/LoadingState";
 
 const AGENT = "genui-flights";
 
@@ -164,78 +165,84 @@ export default function App() {
 
   return (
     <Shell onReset={reset} turns={turns}>
-      <p className="mb-6 text-[12px] leading-5 font-[425] tracking-[-0.06px] text-[var(--ink-faint)]">
-        Generative UI on TrueForge
-      </p>
-
-      <h1 className="mb-6 font-[var(--font-display)] text-[28px] leading-[1.15] font-semibold tracking-[-0.6px] text-[var(--ink)]">
-        Any MCP server, rendered as real interface.
-      </h1>
-
-      <p className="mb-10 text-[13px] leading-[22px] text-[var(--ink-2)]">
-        Ask for a route and a date. The agent calls a public flight connector, then draws
-        the results with its own components instead of describing them in prose. Picking
-        one continues the conversation; anything irreversible stops for you first.
-      </p>
-
-      <div className="flex flex-col gap-4">
-        {bubbles.map((b, i) => (
-          <div key={i}>
-            {b.kind === "user" && (
-              <div className="flex justify-end">
-                <div className="max-w-[85%] rounded-[var(--radius-control)] bg-[var(--field)] px-3 py-1.5 text-[13px] leading-5 text-[var(--ink)]">
-                  {b.text}
-                </div>
-              </div>
-            )}
-            {b.kind === "text" && (
-              <div className="text-[13px] leading-[22px] whitespace-pre-wrap text-[var(--ink-2)]">
-                {b.text}
-              </div>
-            )}
-            {b.kind === "error" && (
-              <div className="rounded-[var(--radius-card)] bg-[var(--red-tint)] px-3 py-2 text-[12.5px] text-[var(--red)]">
-                {b.text}
-              </div>
-            )}
-            {b.kind === "tool" && renderTool(b)}
+      <div className="flex min-h-0 flex-1 flex-col px-8 py-9">
+        <div className="mb-3 flex items-start gap-2 sm:items-baseline">
+          <span className="mt-0.5 font-mono text-[11px] tabular-nums text-[var(--ink-3)] sm:mt-0">
+            01
+          </span>
+          <div className="min-w-0 sm:flex sm:items-baseline sm:gap-2">
+            <h3 className="text-[13px] font-semibold whitespace-nowrap text-[var(--ink)]">
+              Flight search
+            </h3>
+            <p className="mt-0.5 text-[12.5px] text-pretty text-[var(--ink-3)] sm:mt-0">
+              Live connector data, drawn by the agent as pickable interface.
+            </p>
           </div>
-        ))}
-
-        {busy && (
-          <div className="flex items-center gap-2 text-[12px] text-[var(--ink-faint)]">
-            <span className="size-1.5 animate-pulse rounded-full bg-[var(--accent)]" />
-            working
-          </div>
-        )}
-      </div>
-
-      <form
-        onSubmit={(e) => {
-          e.preventDefault();
-          send(input);
-        }}
-        className="sticky bottom-6 z-20 mt-8"
-      >
-        <div className="flex items-center gap-2 rounded-[var(--radius-control)] bg-[var(--surface)] px-3 py-2 shadow-[var(--shadow-card)]">
-          <input
-            value={input}
-            onChange={(e) => setInput(e.target.value)}
-            placeholder="Ask for a route and a date…"
-            className="min-w-0 flex-1 bg-transparent text-[13px] text-[var(--ink)] outline-none placeholder:text-[var(--ink-faint)]"
-          />
-          <button
-            type="submit"
-            disabled={busy || !input.trim()}
-            aria-label="Send"
-            className="grid size-7 shrink-0 place-items-center rounded-[var(--radius-chip)] bg-[var(--ink)] text-[var(--bg)] transition-opacity disabled:opacity-25"
-          >
-            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round">
-              <path d="M12 19V5M5 12l7-7 7 7" />
-            </svg>
-          </button>
         </div>
-      </form>
+
+        <div className="flex min-h-0 flex-1 flex-col overflow-y-auto rounded-[var(--radius-window)] bg-[var(--canvas)] p-6">
+          {bubbles.length === 0 ? (
+            <div className="m-auto max-w-[340px] text-center text-[12.5px] leading-relaxed text-[var(--ink-3)]">
+              Ask for a route and a date. The agent calls the flight connector, then draws
+              the results with its own components instead of describing them.
+            </div>
+          ) : (
+            <div className="flex flex-col gap-4">
+              {bubbles.map((b, i) => (
+                <div key={i}>
+                  {b.kind === "user" && (
+                    <div className="flex justify-end">
+                      <div className="max-w-[85%] rounded-[var(--radius-control)] bg-[var(--surface)] px-3 py-1.5 text-[13px] leading-5 text-[var(--ink)] shadow-[var(--shadow-hairline)]">
+                        {b.text}
+                      </div>
+                    </div>
+                  )}
+                  {b.kind === "text" && (
+                    <div className="text-[13px] leading-[22px] whitespace-pre-wrap text-[var(--ink-2)]">
+                      {b.text}
+                    </div>
+                  )}
+                  {b.kind === "error" && (
+                    <div className="rounded-[var(--radius-card)] bg-[var(--red-tint)] px-3 py-2 text-[12.5px] text-[var(--red)]">
+                      {b.text}
+                    </div>
+                  )}
+                  {b.kind === "tool" && renderTool(b)}
+                </div>
+              ))}
+
+              {busy && <LoadingState label="Churning" />}
+            </div>
+          )}
+        </div>
+
+        <form
+          onSubmit={(e) => {
+            e.preventDefault();
+            send(input);
+          }}
+          className="mt-3"
+        >
+          <div className="flex items-center gap-2 rounded-[var(--radius-window)] bg-[var(--surface)] px-3.5 py-2.5 shadow-[var(--shadow-card)]">
+            <input
+              value={input}
+              onChange={(e) => setInput(e.target.value)}
+              placeholder="Ask for a route and a date…"
+              className="min-w-0 flex-1 bg-transparent text-[13px] text-[var(--ink)] outline-none placeholder:text-[var(--ink-3)]"
+            />
+            <button
+              type="submit"
+              disabled={busy || !input.trim()}
+              aria-label="Send"
+              className="grid size-7 shrink-0 place-items-center rounded-full bg-[var(--ink)] text-[var(--page)] transition-opacity disabled:opacity-20"
+            >
+              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round">
+                <path d="M12 19V5M5 12l7-7 7 7" />
+              </svg>
+            </button>
+          </div>
+        </form>
+      </div>
     </Shell>
   );
 }
