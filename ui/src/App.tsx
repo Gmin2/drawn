@@ -291,21 +291,21 @@ export default function App() {
     return <ToolChip name={b.name} args={args} />;
   }
 
-  async function open(session: SessionSummary) {
+  async function open(id: string) {
     if (busy) return;
     setBusy(true);
     try {
-      const replay = await loadSession(session.id);
+      const replay = await loadSession(id);
       const next: Bubble[] = [];
       for (const turn of replay.turns) {
         for (const text of turn.userMessages) next.push({ kind: "user", key: `replay-${next.length}`, text });
         next.push(...eventsToBubbles(turn.events));
       }
-      setSessionId(session.id);
+      setSessionId(id);
       setBubbles(next);
       setPending(replay.requiredActions);
       setDecided(replay.decisions);
-      localStorage.setItem("genui:last-session", session.id);
+      localStorage.setItem("genui:last-session", id);
     } catch (err) {
       setBubbles([
         { kind: "error", key: "replay-error", text: err instanceof Error ? err.message : String(err) },
@@ -331,7 +331,7 @@ export default function App() {
       sessions={sessions}
       connectors={CONNECTORS}
       activeId={sessionId}
-      onPick={(s: SessionItem) => void open(s)}
+      onPick={(s: SessionItem) => void open(s.id)}
     >
       <div className="flex min-h-0 flex-1 flex-col px-12 py-9">
         <div className="mb-3 flex items-start gap-2 sm:items-baseline">

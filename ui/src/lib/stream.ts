@@ -1,3 +1,4 @@
+import { apiUrl } from "./api";
 import type { RequiredAction, TurnEvent } from "./trueforge";
 
 /* Reads a turn as it happens instead of polling for it to finish.
@@ -23,7 +24,7 @@ export async function streamTurn(
   onUpdate: (u: StreamUpdate) => void,
   signal?: AbortSignal,
 ): Promise<{ status: string; message?: string; requiredActions: RequiredAction[] }> {
-  const res = await fetch(`/api/v1/sessions/${sessionId}/turns`, {
+  const res = await fetch(apiUrl(`/sessions/${sessionId}/turns`), {
     method: "POST",
     headers: { "Content-Type": "application/json", Accept: "text/event-stream" },
     body: JSON.stringify({ input, stream: true }),

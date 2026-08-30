@@ -11,7 +11,6 @@ import {
   IconMagnifyingGlass,
   IconPlugConnector,
   IconSidebarLeftArrow,
-  IconSparkle,
 } from "./icons";
 
 /* Ported from the reference sidebar: compact workspace switcher, primary rail,
