@@ -67,10 +67,31 @@ export function DataTable({
   // The status becomes its own column of pills, appended after whatever the
   // agent supplied, rather than being flattened into a plain cell.
   const heads = statuses.length > 0 ? [...columns, "Status"] : columns;
-  const template = `minmax(0,1.5fr) ${heads
-    .slice(1)
-    .map(() => "minmax(0,0.85fr)")
-    .join(" ")}`;
+
+  // Width follows content, not position. Giving the first column the widest
+  // track assumed it was the important one, which is wrong the moment a table
+  // starts with something like an issue number: the id got a third of the
+  // width and the title was truncated to nothing. Each column is sized by its
+  // longest value instead, clamped so one long cell cannot swallow the row.
+  const template = useMemo(() => {
+    const statusColumn = statuses.length > 0 ? heads.length - 1 : -1;
+    return heads
+      .map((head, i) => {
+        // the status column has no entry in cells, so it measures its pills
+        const longest =
+          i === statusColumn
+            ? rows.reduce((max, row) => Math.max(max, (row.status ?? "").length + 2), head.length)
+            : rows.reduce((max, row) => Math.max(max, (row.cells[i] ?? "").length), head.length);
+
+        // the floor is what a short value needs to stay whole, cell padding
+        // included, so an id column never truncates to an ellipsis. The share
+        // above that floor is what the column gets when there is room spare.
+        const floor = `calc(${Math.min(longest, 12)}ch + 30px)`;
+        const share = (Math.min(Math.max(longest, 8), 34) / 10).toFixed(2);
+        return `minmax(${floor}, ${share}fr)`;
+      })
+      .join(" ");
+  }, [heads, rows, statuses.length]);
 
   return (
     <motion.div
