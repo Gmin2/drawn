@@ -128,10 +128,6 @@ export function DataTable({
 
           {rows.map((row) => {
             const shown = filter === null || row.status === filter;
-            // a row with somewhere to go is a real anchor, so it gets
-            // middle-click, cmd-click and a status-bar preview rather than a
-            // click handler pretending to be a link
-            const RowTag = row.href ? "a" : "div";
             return (
               <div
                 key={row.id}
@@ -145,19 +141,13 @@ export function DataTable({
                 }}
               >
                 <div className="overflow-hidden">
-                  <RowTag
+                  {/* The row stays a div so role="row" is honest. The link is a
+                      real anchor in the first cell whose ::after covers the row,
+                      which keeps the whole row clickable without the anchor
+                      having to claim to be a row. */}
+                  <div
                     role="row"
-                    {...(row.href
-                      ? {
-                          href: row.href,
-                          target: "_blank",
-                          rel: "noreferrer noopener",
-                          tabIndex: shown ? 0 : -1,
-                        }
-                      : {})}
-                    className={`group grid border-b border-[var(--line)] text-[13px] transition-colors duration-100 hover:bg-[var(--hover)] ${
-                      row.href ? "cursor-pointer focus-visible:bg-[var(--hover)]" : ""
-                    }`}
+                    className="group relative grid border-b border-[var(--line)] text-[13px] transition-colors duration-100 hover:bg-[var(--hover)] focus-within:bg-[var(--hover)]"
                     style={{ gridTemplateColumns: template }}
                   >
                     {/* replayed sessions can carry payloads that predate the
@@ -170,11 +160,19 @@ export function DataTable({
                           i === 0 ? "font-medium text-[var(--ink)]" : "text-[var(--ink-2)]"
                         }`}
                       >
-                        <span
-                          className={`truncate ${i === 0 && row.href ? "group-hover:underline" : ""}`}
-                        >
-                          {cell || "—"}
-                        </span>
+                        {i === 0 && row.href ? (
+                          <a
+                            href={row.href}
+                            target="_blank"
+                            rel="noreferrer noopener"
+                            tabIndex={shown ? 0 : -1}
+                            className="truncate outline-none after:absolute after:inset-0 hover:underline"
+                          >
+                            {cell || "—"}
+                          </a>
+                        ) : (
+                          <span className="truncate">{cell || "—"}</span>
+                        )}
                       </span>
                     ))}
                     {statuses.length > 0 && (
@@ -191,7 +189,7 @@ export function DataTable({
                         )}
                       </span>
                     )}
-                  </RowTag>
+                  </div>
                 </div>
               </div>
             );
