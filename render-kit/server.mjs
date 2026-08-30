@@ -39,6 +39,19 @@ const tableRow = z.object({
     .string()
     .optional()
     .describe("Groups the row under a filter chip, e.g. an issue state or a task stage."),
+  href: z
+    .string()
+    .url()
+    // .url() accepts any parseable scheme, so javascript: and data: get through
+    // and the row would render an anchor that runs them. Rows link to records,
+    // and a record lives at an http(s) address.
+    .refine((value) => /^https?:$/.test(new URL(value).protocol), {
+      message: "href must be http or https",
+    })
+    .optional()
+    .describe(
+      "Where this row lives. Supply it whenever the record has a canonical page — an issue, a pull request, a document — and the row becomes a link to it.",
+    ),
 });
 
 const field = z.object({

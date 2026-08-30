@@ -10,6 +10,7 @@ export type TableRow = {
   id: string;
   cells: string[];
   status?: string;
+  href?: string;
 };
 
 export type DataTableProps = {
@@ -111,14 +112,14 @@ export function DataTable({
         <div role="table" aria-label={title} aria-rowcount={rows.length + 1} className="min-w-[440px]">
           <div
             role="row"
-            className="grid border-b border-[var(--line)] text-[13px] font-medium text-[var(--ink-2)]"
+            className="grid border-b border-[var(--line)] text-[12px] font-medium text-[var(--ink-2)]"
             style={{ gridTemplateColumns: template }}
           >
             {heads.map((column, i) => (
               <span
                 key={column}
                 role="columnheader"
-                className={`px-3.5 py-2.5 ${i < heads.length - 1 ? "border-r border-[var(--line)]" : ""}`}
+                className={`px-3 py-2 ${i < heads.length - 1 ? "border-r border-[var(--line)]" : ""}`}
               >
                 {column}
               </span>
@@ -140,13 +141,17 @@ export function DataTable({
                 }}
               >
                 <div className="overflow-hidden">
+                  {/* The row stays a div so role="row" is honest. The link is a
+                      real anchor in the first cell whose ::after covers the row,
+                      which keeps the whole row clickable without the anchor
+                      having to claim to be a row. */}
                   <div
                     role="row"
-                    className="grid border-b border-[var(--line)] text-[13px] transition-colors duration-100 hover:bg-[var(--hover)]"
+                    className="group relative grid border-b border-[var(--line)] text-[13px] transition-colors duration-100 hover:bg-[var(--hover)] focus-within:bg-[var(--hover)]"
                     style={{ gridTemplateColumns: template }}
                   >
-                    {/* replayed sessions can carry payloads that predate the server-side
-                        check, so clamp to the declared columns here too */}
+                    {/* replayed sessions can carry payloads that predate the
+                        server-side check, so clamp to the declared columns here too */}
                     {row.cells.slice(0, columns.length).map((cell, i) => (
                       <span
                         key={i}
@@ -155,7 +160,19 @@ export function DataTable({
                           i === 0 ? "font-medium text-[var(--ink)]" : "text-[var(--ink-2)]"
                         }`}
                       >
-                        <span className="truncate">{cell || "—"}</span>
+                        {i === 0 && row.href ? (
+                          <a
+                            href={row.href}
+                            target="_blank"
+                            rel="noreferrer noopener"
+                            tabIndex={shown ? 0 : -1}
+                            className="truncate outline-none after:absolute after:inset-0 hover:underline"
+                          >
+                            {cell || "—"}
+                          </a>
+                        ) : (
+                          <span className="truncate">{cell || "—"}</span>
+                        )}
                       </span>
                     ))}
                     {statuses.length > 0 && (
