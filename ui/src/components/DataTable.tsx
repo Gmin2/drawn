@@ -153,7 +153,7 @@ export function DataTable({
               <div
                 key={row.id}
                 aria-hidden={!shown}
-                {...(!shown ? { inert: "" as const } : {})}
+                {...(!shown ? { inert: true } : {})}
                 className="grid transition-[grid-template-rows,opacity] duration-300"
                 style={{
                   gridTemplateRows: shown ? "1fr" : "0fr",

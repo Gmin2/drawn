@@ -1,3 +1,5 @@
+import { apiUrl } from "./api";
+
 export type ToolCall = {
   id: string;
   function: { name: string; arguments: string };
@@ -16,7 +18,7 @@ export type TurnEvent = {
 };
 
 async function call<T>(path: string, init?: RequestInit): Promise<T> {
-  const res = await fetch(`/api/v1${path}`, {
+  const res = await fetch(apiUrl(path), {
     ...init,
     headers: { "Content-Type": "application/json", ...init?.headers },
   });
